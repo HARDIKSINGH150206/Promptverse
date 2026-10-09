@@ -55,7 +55,7 @@ function Outcome({ offer }: { offer: OfferDetail }) {
       ) : null}
 
       {offer.status === "collected" && collectedAt ? (
-        <div className="flex items-center gap-4 rounded-card bg-blue p-5 text-white animate-pop sm:p-6" role="status">
+        <div className="flex items-center gap-4 rounded-card bg-emerald p-5 text-navy animate-pop sm:p-6" role="status">
           <PackageCheck className="size-10 shrink-0" aria-hidden />
           <p className="text-xl font-semibold sm:text-2xl">
             All {offer.meal_count} meals collected{" "}

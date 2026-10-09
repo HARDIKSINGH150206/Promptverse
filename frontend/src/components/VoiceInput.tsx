@@ -178,7 +178,7 @@ export function VoiceInput({
             aria-label={listening ? "Stop recording" : "Start recording"}
             className={cx(
               "flex size-24 items-center justify-center rounded-full transition-colors disabled:opacity-50",
-              listening ? "animate-pulse-ring bg-orange text-navy" : "bg-orange text-navy hover:bg-orange/90",
+              listening ? "animate-pulse-ring bg-sky text-navy" : "bg-white text-navy hover:bg-white/90",
             )}
           >
             {transcribing ? <LoaderCircle className="size-10 animate-spin" aria-hidden /> : listening ? <Square className="size-9 fill-current" aria-hidden /> : <Mic className="size-10" aria-hidden />}

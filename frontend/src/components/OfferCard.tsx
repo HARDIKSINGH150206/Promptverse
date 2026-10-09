@@ -57,7 +57,7 @@ export function OfferCard({ offer, detail, now }: { offer: Offer; detail?: Offer
       className={cx(
         "group block rounded-card border bg-panel p-5 transition-colors hover:border-white/25",
         finished ? "border-line" : "border-line",
-        offer.status === "collected" && "border-l-8 border-l-blue",
+        offer.status === "collected" && "border-l-2 border-l-emerald/70",
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
