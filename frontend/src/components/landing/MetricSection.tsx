@@ -2,6 +2,7 @@ import { Ban, LifeBuoy, MessageSquareText, PackageCheck } from "lucide-react";
 import type { Board } from "@/lib/api/types";
 import { pct } from "@/lib/time";
 import { Container } from "./shared";
+import { CountUp, Reveal } from "../motion";
 
 /** Where the reference has pricing: the one number we claim, and how each count is made. */
 export function MetricSection({ board }: { board: Board | null }) {
@@ -15,26 +16,26 @@ export function MetricSection({ board }: { board: Board | null }) {
   return (
     <section className="py-24">
       <Container>
-        <div className="text-center">
-          <p className="display tabular text-7xl text-white sm:text-8xl lg:text-[9rem]">{s ? pct(s.share_collected_within_window) : "—"}</p>
+        <Reveal className="text-center">
+          <p className="display tabular text-7xl text-white sm:text-8xl lg:text-[9rem]"><CountUp value={s ? s.share_collected_within_window : null} format={(n) => pct(n)} duration={1800} /></p>
           <p className="mt-4 text-xl text-white/70">of finished offers collected within their safe window</p>
           <p className="mx-auto mt-3 max-w-lg text-[15px] text-white/45">
             The one metric we claim, measured live by the backend. No real-world waste-reduction numbers.
           </p>
-        </div>
+        </Reveal>
         <div className="mt-14 grid gap-2 rounded-[1.4rem] border border-line bg-panel p-2 sm:grid-cols-2 lg:grid-cols-4">
-          {cards.map((c) => (
-            <div key={c.title} className="flex flex-col">
+          {cards.map((c, i) => (
+            <Reveal key={c.title} delay={i * 110} className="flex flex-col">
               <div className="rounded-2xl border border-white/[0.06] bg-raised p-5">
                 <p className="flex items-center gap-2 text-[15px] text-white"><c.icon className="size-4 text-sky" aria-hidden />{c.title}</p>
-                <p className="tabular mt-6 text-5xl tracking-tight text-white">{c.v ?? "—"}</p>
+                <p className="tabular mt-6 text-5xl tracking-tight text-white"><CountUp value={c.v} /></p>
                 <p className="mt-2 text-sm text-white/45">so far</p>
               </div>
               <ul className="space-y-3 px-5 py-5 text-[15px] text-white/60">
                 <li className="text-white/45">Counted when:</li>
                 {c.how.map((h) => <li key={h}>{h}</li>)}
               </ul>
-            </div>
+            </Reveal>
           ))}
         </div>
       </Container>

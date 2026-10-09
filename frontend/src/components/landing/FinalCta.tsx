@@ -3,11 +3,13 @@ import { Wordmark } from "../Logo";
 import { ButtonLink } from "../ui";
 import { Landscape } from "./Landscape";
 import { Container } from "./shared";
+import { Reveal } from "../motion";
 
 export function FinalCta() {
   return (
     <section className="py-24">
       <Container>
+        <Reveal y={40}>
         <div className="relative overflow-hidden rounded-[1.6rem] border border-white/10 p-8 sm:p-11">
           <Landscape variant="day" className="absolute inset-0 h-full w-full" />
           <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-navy/60 via-navy/10 to-transparent" aria-hidden />
@@ -22,6 +24,7 @@ export function FinalCta() {
             </div>
           </div>
         </div>
+        </Reveal>
       </Container>
     </section>
   );

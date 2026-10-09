@@ -4,6 +4,7 @@ import { cx } from "@/lib/cx";
 import { ButtonLink, Eyebrow } from "../ui";
 import { BENGALURU, DOTS, MAP_H, MAP_W } from "./indiaDots";
 import { Container, SectionTitle } from "./shared";
+import { CountUp, Reveal } from "../motion";
 
 const KK = { lat: 12.9352, lng: 77.6245 };
 
@@ -117,9 +118,9 @@ export function NetworkMap({ board, restaurants }: { board: Board | null; restau
                 See every home <ArrowRight className="size-4" aria-hidden />
               </ButtonLink>
             </div>
-            <div className="mt-10 lg:mt-auto">
+            <Reveal delay={200} y={30} className="mt-10 lg:mt-auto">
               <RelayInset homes={homes} kitchens={kitchens} />
-            </div>
+            </Reveal>
           </div>
 
           <div className="relative h-[420px] sm:h-[560px] lg:h-auto">
@@ -136,11 +137,11 @@ export function NetworkMap({ board, restaurants }: { board: Board | null; restau
             <div className={cx("absolute right-0 bottom-0 flex gap-12 text-right")}>
               <div>
                 <p className="text-sm text-white/45">Meals rescued</p>
-                <p className="tabular mt-1 text-3xl text-white">{board ? board.stats.meals_rescued : "—"}</p>
+                <p className="mt-1 text-3xl text-white"><CountUp value={board?.stats.meals_rescued} /></p>
               </div>
               <div>
                 <p className="text-sm text-white/45">Backups promoted</p>
-                <p className="tabular mt-1 text-3xl text-white">{board ? board.stats.backups_promoted : "—"}</p>
+                <p className="mt-1 text-3xl text-white"><CountUp value={board?.stats.backups_promoted} /></p>
               </div>
             </div>
           </div>

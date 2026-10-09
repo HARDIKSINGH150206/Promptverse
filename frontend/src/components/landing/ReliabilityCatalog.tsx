@@ -3,6 +3,7 @@ import type { Board } from "@/lib/api/types";
 import { ReliabilityBar } from "../ReliabilityBar";
 import { ButtonLink, Eyebrow, SimulatedBadge, Skeleton } from "../ui";
 import { Container, SectionTitle } from "./shared";
+import { Reveal } from "../motion";
 
 const TYPE: Record<string, string> = { shelter: "Shelter", orphanage: "Orphanage", old_age_home: "Elders' home", ngo: "NGO" };
 
@@ -41,7 +42,7 @@ export function ReliabilityCatalog({ board }: { board: Board | null }) {
           </div>
         </div>
 
-        <div className="rounded-[1.4rem] border border-line bg-panel p-2">
+        <Reveal delay={120} y={36} className="rounded-[1.4rem] border border-line bg-panel p-2">
           <div className="rounded-2xl border border-white/[0.05] bg-navy">
             <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
               <p className="font-medium text-white">Homes, by reliability</p>
@@ -50,13 +51,13 @@ export function ReliabilityCatalog({ board }: { board: Board | null }) {
             <ol className="divide-y divide-white/[0.05]">
               {homes.length
                 ? homes.map((h, i) => (
-                  <li key={h.id} className="px-5 py-4">
+                  <Reveal as="li" key={h.id} delay={200 + i * 90} y={10} className="px-5 py-4">
                     <div className="mb-2.5 flex items-center justify-between gap-3">
                       <p className="text-[15px] text-white"><span className="tabular mr-3 font-mono text-xs text-white/30">0{i + 1}</span>{h.name}</p>
                       <span className="text-xs text-white/40">{TYPE[h.type]} · {h.area}</span>
                     </div>
                     <ReliabilityBar recipient={h} />
-                  </li>
+                  </Reveal>
                 ))
                 : Array.from({ length: 5 }, (_, i) => <li key={i} className="px-5 py-4"><Skeleton className="h-10" /></li>)}
             </ol>
@@ -64,7 +65,7 @@ export function ReliabilityCatalog({ board }: { board: Board | null }) {
               Dot = likely completion · band = 90% range · refreshed live from the board
             </p>
           </div>
-        </div>
+        </Reveal>
       </Container>
     </section>
   );

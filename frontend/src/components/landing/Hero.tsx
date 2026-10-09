@@ -13,6 +13,7 @@ import { ReliabilityBar } from "../ReliabilityBar";
 import { ButtonLink, Skeleton } from "../ui";
 import { HeroBackdrop } from "./HeroBackdrop";
 import { Container } from "./shared";
+import { Reveal } from "../motion";
 
 const FINISHED = ["collected", "partially_collected", "fallback", "expired"];
 
@@ -163,6 +164,7 @@ export function Hero({ board }: { board: Board | null }) {
       <HeroBackdrop />
       <Container className="relative pt-20 sm:pt-28">
         <div className="mx-auto max-w-5xl text-center">
+          <Reveal delay={0}>
           <Link
             href="/board"
             className="inline-flex items-center gap-2 rounded-full border border-line bg-panel py-1 pr-3.5 pl-1 text-sm text-white/80 transition-colors hover:border-white/25"
@@ -170,15 +172,21 @@ export function Hero({ board }: { board: Board | null }) {
             <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-navy">Live</span>
             {s ? `${s.meals_rescued} meals rescued, ${s.backups_promoted} backups promoted` : "A backup on standby before anyone drops out"}
           </Link>
+          </Reveal>
+          <Reveal delay={90} y={24}>
           <h1 className="display mt-8 text-5xl text-white sm:text-6xl lg:text-[4.6rem]">
             Leftover food,
             <br />
             collected before it spoils
           </h1>
+          </Reveal>
+          <Reveal delay={180}>
           <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-white/60">
             Restaurants say what&apos;s left. Shelters say what they need. AnnaRelay picks the collector most likely to show up
             and readies a backup before anyone drops out.
           </p>
+          </Reveal>
+          <Reveal delay={270}>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
             <ButtonLink href="/restaurant" size="lg">
               List leftover food <ArrowRight className="size-4" aria-hidden />
@@ -192,6 +200,7 @@ export function Hero({ board }: { board: Board | null }) {
               </p>
             </div>
           </div>
+          </Reveal>
         </div>
 
         {/* settles from a slight tilt to flat as you scroll (var set by HeroBackdrop) */}
@@ -199,7 +208,9 @@ export function Hero({ board }: { board: Board | null }) {
           className="relative mx-auto mt-16 max-w-[1104px] sm:mt-20"
           style={{ transform: "perspective(1600px) rotateX(var(--tilt, 0deg))", transformOrigin: "50% 0%" }}
         >
-          <ProductFrame board={board} />
+          <Reveal delay={380} y={40}>
+            <ProductFrame board={board} />
+          </Reveal>
         </div>
       </Container>
     </section>

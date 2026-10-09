@@ -7,6 +7,7 @@ import { cx } from "@/lib/cx";
 import { ButtonLink } from "../ui";
 import { Landscape } from "./Landscape";
 import { Container, Mono, SectionTitle } from "./shared";
+import { Reveal } from "../motion";
 
 /** Illustrative example of one offer moving through the relay (not live data; labelled "Example"). */
 const STAGES = [
@@ -58,6 +59,7 @@ export function RelayFeature() {
           <br className="hidden sm:block" /> and a full plate
         </SectionTitle>
 
+        <Reveal delay={120} y={36}>
         <div className="relative mt-14 overflow-hidden rounded-[1.4rem] border border-line">
           <Landscape variant="day" className="absolute inset-0 h-full w-full" />
           <div className="relative flex min-h-[460px] items-center justify-center px-5 py-16">
@@ -86,6 +88,8 @@ export function RelayFeature() {
             </div>
           </div>
         </div>
+
+        </Reveal>
 
         <div className="mt-8 grid gap-6 md:grid-cols-4" role="tablist" aria-label="How the relay works">
           {STAGES.map((st, i) => (

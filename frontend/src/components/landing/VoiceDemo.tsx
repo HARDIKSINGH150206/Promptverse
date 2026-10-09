@@ -2,6 +2,7 @@ import { ArrowRight, Copy, Leaf, Mic } from "lucide-react";
 import { cx } from "@/lib/cx";
 import { ButtonLink } from "../ui";
 import { Container, Lede, Mono, SectionTitle } from "./shared";
+import { Reveal } from "../motion";
 
 type Tok = string | { t: string; k: "num" | "food" | "time" | "place" };
 
@@ -39,14 +40,14 @@ export function VoiceDemo() {
         <Lede className="mt-6">
           Voice notes in English, Hindi or a mix become a structured offer. You review every field before anything is sent.
         </Lede>
-        <div className="mt-8 flex flex-wrap gap-3">
+        <Reveal delay={200} className="mt-8 flex flex-wrap gap-3">
           <ButtonLink href="/restaurant" variant="onDark">Try it: list food <ArrowRight className="size-4" aria-hidden /></ButtonLink>
           <ButtonLink href="/recipient" variant="outline">Post a need</ButtonLink>
-        </div>
+        </Reveal>
 
         <div className="mt-14 grid gap-5 lg:grid-cols-[1.1fr_1fr]">
           {/* "editor" */}
-          <div className="rounded-[1.25rem] border border-line bg-panel p-2">
+          <Reveal y={32} className="rounded-[1.25rem] border border-line bg-panel p-2">
             <div className="flex items-center gap-2 px-2 py-1.5">
               <span className="inline-flex items-center gap-1.5 rounded-lg bg-raised px-2.5 py-1 font-mono text-[12px] text-white/85">
                 <Mic className="size-3 text-orange" aria-hidden /> voice-note.txt
@@ -68,10 +69,10 @@ export function VoiceDemo() {
               <span>Speech-to-text · editable</span>
               <span className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-sky" aria-hidden />Example</span>
             </div>
-          </div>
+          </Reveal>
 
           {/* "response" */}
-          <div className="flex flex-col rounded-[1.25rem] border border-line bg-panel">
+          <Reveal delay={160} y={32} className="flex flex-col rounded-[1.25rem] border border-line bg-panel">
             <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
               <p className="font-medium text-white">Understood</p>
               <span className="inline-flex items-center gap-1.5 text-xs text-white/50"><span className="size-1.5 rounded-full bg-sky" aria-hidden />LLM + Laya</span>
@@ -96,7 +97,7 @@ export function VoiceDemo() {
                 </div>
               ))}
             </div>
-          </div>
+          </Reveal>
         </div>
         <Mono className="mt-4 block text-right">Illustrative example</Mono>
       </Container>
