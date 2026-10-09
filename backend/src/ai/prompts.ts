@@ -26,6 +26,7 @@ Return ONLY a JSON object with exactly these keys:
 
 Rules:
 - Use only what is said or clearly visible in the photo. Never invent quantities or times.
+- The note may come from speech-to-text: "save till 10" means "safe till 10".
 - NEVER guess "safe_until". If the speaker did not say until when the food is safe, set it to null.
 - "diet" is "nonveg" if any item contains meat, fish or egg; "veg" if the speaker says veg or every item is clearly vegetarian; otherwise null.
 - "estimated_meals": one plate/portion/packet = one meal.

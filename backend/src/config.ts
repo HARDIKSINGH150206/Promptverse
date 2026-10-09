@@ -50,6 +50,7 @@ export const config = {
   STT_PROVIDER: str("STT_PROVIDER", "sarvam") as "sarvam" | "groq" | "none",
   SARVAM_API_KEY: str("SARVAM_API_KEY"),
   SARVAM_MODEL: str("SARVAM_MODEL", "saaras:v4"),
+  SARVAM_STREAM_MODEL: str("SARVAM_STREAM_MODEL", "saaras:v3-realtime"),
   GROQ_API_KEY: str("GROQ_API_KEY"),
   GROQ_STT_MODEL: str("GROQ_STT_MODEL", "whisper-large-v3-turbo"),
 

@@ -52,6 +52,8 @@ curl https://ai-gateway.vercel.sh/v1/evaluate \
 
 `POST /api/transcribe` (multipart): `audio` (webm/ogg/wav/mp3/m4a, < 30 s), optional `language_code` (default `unknown` = auto-detect across 23 Indian languages incl. en-IN, hi-IN, kn-IN, ta-IN; code-mixed speech works), optional `mode` (saaras:v3 only: transcribe | translate | codemix ...). Returns `{ text, language_code, language_probability, source: "sarvam" | "groq" }`. Send `text` to `/api/offers/parse` or `/api/demands/parse` as `transcript`; the LLM reads Hindi / Hinglish / Kannada directly. Spoken 12-hour times ("11 baje") are corrected in code so `safe_until` / `needed_by` never land in the past.
 
+**Live (word-by-word) transcription:** `ws://localhost:4000/api/transcribe/stream?language_code=auto`. The browser streams 16 kHz mono 16-bit PCM; the backend relays it to Sarvam realtime (`SARVAM_STREAM_MODEL=saaras:v3-realtime`) and sends back `partial` / `final` / `done` events. Protocol and a browser recipe: [`CONTRACT_CHANGES.md` #3](CONTRACT_CHANGES.md). Test with `npx tsx scripts/stt-stream-check.ts <file.wav>`.
+
 ## Environment
 
 See [`.env.example`](.env.example). Timers are demo-scaled: accept 45 s, reconfirm 20 s after accept, reconfirm timeout 30 s, standby timeout 45 s. `RISK_THRESHOLD=0.25`, `INTENT_MIN_PROBABILITY=0.70`, `EXPLORE_MIN_SLACK_MINS=90`, `DEMO_SEED=42`. `FRONTEND_ORIGIN` accepts a comma-separated list (add `http://<laptop-ip>:3000` for cross-laptop demos).

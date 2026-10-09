@@ -12,6 +12,7 @@ import { offers } from "./routes/offers";
 import { transcribeRouter } from "./routes/transcribe";
 import { startScheduler } from "./scheduler";
 import { startBot } from "./telegram/bot";
+import { streamWss } from "./ai/sttStream";
 
 export function createApp() {
   const app = express();
@@ -35,8 +36,20 @@ if (!process.env.VITEST) {
   const empty = (db.prepare("SELECT COUNT(*) AS n FROM recipients").get() as { n: number }).n === 0;
   if (empty) seed();
 
-  createApp().listen(config.PORT, () => {
+  const server = createApp().listen(config.PORT, () => {
     console.log(`AnnaRelay backend on http://localhost:${config.PORT}  (llm: ${llmStatus()}, laya: ${layaStatus()})`);
+  });
+  // live speech-to-text WebSocket (Sarvam realtime relay)
+  server.on("upgrade", (req, socket, head) => {
+    const path = (req.url ?? "").split("?")[0];
+    // CORS doesn't cover WebSockets: only our frontend origins (or non-browser clients) may use the Sarvam key
+    const origin = req.headers.origin;
+    const allowed = config.FRONTEND_ORIGIN.split(",").map((s) => s.trim());
+    if (path !== "/api/transcribe/stream" || (origin && !allowed.includes("*") && !allowed.includes(origin))) {
+      socket.destroy();
+      return;
+    }
+    streamWss.handleUpgrade(req, socket, head, (ws) => streamWss.emit("connection", ws, req));
   });
   startScheduler();
   void startBot();

@@ -164,7 +164,7 @@ export function mockParseOffer(transcript: string, ref = nowMs()): ParsedOfferNo
 
   const cookedM = t.match(/(?:made|cooked|prepared|ready)\s*(?:at|around|by)?\s*(\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?)/);
   const cooked = cookedM ? parseSpokenTime(cookedM[1]) : null;
-  const safeM = t.match(/(?:safe|good|fresh|okay|ok|fine)\s*(?:till|until|upto|up to|to)\s*(\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?)/);
+  const safeM = t.match(/(?:safe|save|good|fresh|okay|ok|fine)\s*(?:till|until|upto|up to|to)\s*(\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?)/);
   const safe = safeM ? parseSpokenTime(safeM[1]) : null;
 
   const notesM = t.match(/((?:back|front|side|rear|main)\s+(?:gate|door|entrance)|(?:pick ?up|collect)\s+(?:from|at)\s+[^,.]+|ask for\s+[^,.]+)/);
