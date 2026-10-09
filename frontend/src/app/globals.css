@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+/*
+  AnnaRelay palette: exactly four colours. Tailwind's default palette is switched off so nothing else sneaks in.
+  Tints come from opacity modifiers on these four (e.g. bg-blue/10), never from new hues.
+  Contrast: white text on navy/blue; navy text on white; navy text on orange (white on orange is only ~2.6:1).
+*/
+:root {
+  --color-white: #f9f9f9;
+  --color-blue: #004e72;
+  --color-orange: #ff6e42;
+  --color-navy: #092634;
+}
+
+@theme {
+  --color-*: initial;
+  --color-white: #f9f9f9;
+  --color-blue: #004e72;
+  --color-orange: #ff6e42;
+  --color-navy: #092634;
+  /* page background: white with a breath of the brand blue */
+  --color-mist: color-mix(in srgb, #004e72 5%, #f9f9f9);
+
+  --radius-card: 1.25rem;
+
+  --animate-enter: enter 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-pop: pop 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-pulse-ring: pulse-ring 1.6s ease-out infinite;
+
+  @keyframes enter {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pop {
+    0% { opacity: 0; transform: scale(0.96); }
+    60% { opacity: 1; transform: scale(1.01); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  @keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 color-mix(in srgb, #ff6e42 55%, transparent); }
+    100% { box-shadow: 0 0 0 14px color-mix(in srgb, #ff6e42 0%, transparent); }
+  }
+}
+
+@theme inline {
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  background: var(--color-navy);
+}
+
+body {
+  background: var(--color-mist);
+  color: var(--color-navy);
+  font-feature-settings: "ss01";
+}
+
+/* numbers that tick should not jitter */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-orange);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
