@@ -1,6 +1,9 @@
+"use client";
+
 import { ArrowRight, Map as MapIcon } from "lucide-react";
 import type { Board, Recipient, Restaurant } from "@/lib/api/types";
 import { cx } from "@/lib/cx";
+import { useInView, useReducedMotion } from "../motion";
 import { ButtonLink, Eyebrow } from "../ui";
 import { BENGALURU, DOTS, MAP_H, MAP_W } from "./indiaDots";
 import { Container, SectionTitle } from "./shared";
@@ -19,6 +22,9 @@ const lit = (i: number) => ((i * 2654435761) >>> 0) % 13 === 0;
 
 /** The dotted map: every land dot, brighter and blue around Bengaluru where the relay runs. */
 function DottedIndia() {
+  const reduced = useReducedMotion();
+  const [ref, inView] = useInView<SVGSVGElement>({ threshold: 0.25 });
+  const shown = reduced || inView;
   const dots: React.ReactNode[] = [];
   for (let i = 0; i < DOTS.length; i += 2) {
     const x = DOTS[i];
@@ -37,8 +43,25 @@ function DottedIndia() {
     );
   }
   return (
-    <svg viewBox={`-1 -1 ${MAP_W + 2} ${MAP_H + 2}`} className="h-full w-full" aria-hidden>
-      {dots}
+    <svg ref={ref} viewBox={`-1 -1 ${MAP_W + 2} ${MAP_H + 2}`} className="h-full w-full" aria-hidden>
+      <defs>
+        {/* a reveal circle that grows out from Bengaluru */}
+        <mask id="india-reveal" maskUnits="userSpaceOnUse">
+          <circle
+            cx={BENGALURU.x}
+            cy={BENGALURU.y}
+            r={130}
+            fill="white"
+            style={{
+              transform: shown ? "scale(1)" : "scale(0)",
+              transformBox: "view-box",
+              transformOrigin: `${BENGALURU.x + 1}px ${BENGALURU.y + 1}px`,
+              transition: reduced ? "none" : "transform 2.4s cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
+          />
+        </mask>
+      </defs>
+      <g mask="url(#india-reveal)">{dots}</g>
       {/* Bengaluru: pulsing reach rings and a hexagon marker */}
       <g transform={`translate(${BENGALURU.x} ${BENGALURU.y})`}>
         {[0, 1.2].map((delay) => (
@@ -60,7 +83,7 @@ function RelayInset({ homes, kitchens }: { homes: Recipient[]; kitchens: Restaur
   const lngs = pts.map((p) => p.lng);
   const [minLat, maxLat] = pts.length ? [Math.min(...lats), Math.max(...lats)] : [KK.lat - 0.03, KK.lat + 0.04];
   const [minLng, maxLng] = pts.length ? [Math.min(...lngs), Math.max(...lngs)] : [KK.lng - 0.03, KK.lng + 0.03];
-  const x = (lng: number) => 12 + ((lng - minLng) / Math.max(1e-6, maxLng - minLng)) * 50;
+  const x = (lng: number) => 26 + ((lng - minLng) / Math.max(1e-6, maxLng - minLng)) * 44;
   const y = (lat: number) => 14 + ((maxLat - lat) / Math.max(1e-6, maxLat - minLat)) * 68;
   const ref = kitchens.find((k) => k.id === "r_koramangala") ?? KK;
 

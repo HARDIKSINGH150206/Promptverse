@@ -95,6 +95,14 @@ body {
   color: var(--color-navy);
 }
 
+/* node flash when a relay packet arrives (used from inline styles, so declared outside @theme) */
+@keyframes node-glow {
+  0% { opacity: 0; }
+  3% { opacity: 1; }
+  16% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
 /* numbers that tick should not jitter */
 .tabular {
   font-variant-numeric: tabular-nums;

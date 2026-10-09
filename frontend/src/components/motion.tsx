@@ -86,7 +86,8 @@ export function CountUp({
   className?: string;
 }) {
   const reduced = useReducedMotion();
-  const [ref, inView] = useInView<HTMLSpanElement>();
+  // start as soon as any part of the number is on screen
+  const [ref, inView] = useInView<HTMLSpanElement>({ threshold: 0, rootMargin: "0px" });
   const [shown, setShown] = useState(0);
   const from = useRef(0);
   const target = value ?? 0;
