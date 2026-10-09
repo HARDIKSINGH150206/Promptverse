@@ -27,8 +27,9 @@ With no keys at all, it runs fully on mocks (`LLM_PROVIDER=mock`, `DECISION_PROV
 
 | Key | Where to get it | `.env` |
 | --- | --- | --- |
-| Generative LLM | Gemini: <https://aistudio.google.com/apikey> (free tier). Or OpenAI / Anthropic console. | `LLM_PROVIDER=gemini`, `LLM_API_KEY=...`, `LLM_MODEL=gemini-2.5-flash` (blank = provider default) |
-| Vercel AI Gateway (Laya) | vercel.com → Dashboard → **AI Gateway** → **API Keys** → Create key. Laya (`convaiinnovations/laya-free`) is free through 31 Oct 2026. | `DECISION_PROVIDER=laya`, `AI_GATEWAY_API_KEY=...` |
+| Generative LLM | **Groq** (in use): <https://console.groq.com/keys>. Also supported: Gemini, OpenAI, Anthropic. | `LLM_PROVIDER=groq`, `LLM_API_KEY=gsk_...`, `LLM_MODEL=openai/gpt-oss-120b` (text-only, so `photo_check` stays null; use gemini for photo checks) |
+| Speech-to-text | **Sarvam** (in use): <https://dashboard.sarvam.ai>. Groq Whisper is the automatic fallback. | `STT_PROVIDER=sarvam`, `SARVAM_API_KEY=...`, `SARVAM_MODEL=saaras:v4`, `GROQ_API_KEY=gsk_...` |
+| Vercel AI Gateway (Laya) | vercel.com → Dashboard → **AI Gateway** → **API Keys** → Create key. Laya (`convaiinnovations/laya-free`) is free through 31 Oct 2026, **but the Vercel account must have a credit card on file** or every call returns `customer_verification_required`. | `DECISION_PROVIDER=laya`, `AI_GATEWAY_API_KEY=...` |
 | Telegram bot | In Telegram, message **@BotFather** → `/newbot` → pick a name and a username ending in `bot` → copy the token | `TELEGRAM_BOT_TOKEN=...`, `TELEGRAM_BOT_USERNAME=...` |
 
 Test Laya directly:
@@ -44,6 +45,10 @@ curl https://ai-gateway.vercel.sh/v1/evaluate \
 `GET /api/health` reports `llm` / `laya` as `ready | mock | missing_key` (Laya also `unavailable` after a failed call) and `telegram` as `ready | disabled`.
 
 **Telegram linking:** each recipient has a link code (`HOPE1`, `SUN1`, `STAR1`, `SAATHI1`, `DAWN1`). Open `t.me/<bot_username>?start=HOPE1` on a phone, or send `/start HOPE1` to the bot. `POST /api/demo/reset` keeps existing chat links.
+
+## Voice (multilingual speech-to-text)
+
+`POST /api/transcribe` (multipart): `audio` (webm/ogg/wav/mp3/m4a, < 30 s), optional `language_code` (default `unknown` = auto-detect across 23 Indian languages incl. en-IN, hi-IN, kn-IN, ta-IN; code-mixed speech works), optional `mode` (saaras:v3 only: transcribe | translate | codemix ...). Returns `{ text, language_code, language_probability, source: "sarvam" | "groq" }`. Send `text` to `/api/offers/parse` or `/api/demands/parse` as `transcript`; the LLM reads Hindi / Hinglish / Kannada directly. Spoken 12-hour times ("11 baje") are corrected in code so `safe_until` / `needed_by` never land in the past.
 
 ## Environment
 

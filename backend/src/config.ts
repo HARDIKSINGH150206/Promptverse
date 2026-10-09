@@ -18,7 +18,7 @@ export const config = {
   FRONTEND_ORIGIN: str("FRONTEND_ORIGIN", "http://localhost:3000"),
   TZ_NAME: str("TZ_NAME", "Asia/Kolkata"),
 
-  LLM_PROVIDER: str("LLM_PROVIDER", "mock") as "gemini" | "openai" | "anthropic" | "mock",
+  LLM_PROVIDER: str("LLM_PROVIDER", "mock") as "gemini" | "openai" | "anthropic" | "groq" | "mock",
   LLM_API_KEY: str("LLM_API_KEY"),
   LLM_MODEL: str("LLM_MODEL"),
 
@@ -44,6 +44,12 @@ export const config = {
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean) as ("animal_feed" | "compost")[],
+
+  STT_PROVIDER: str("STT_PROVIDER", "sarvam") as "sarvam" | "groq" | "none",
+  SARVAM_API_KEY: str("SARVAM_API_KEY"),
+  SARVAM_MODEL: str("SARVAM_MODEL", "saaras:v4"),
+  GROQ_API_KEY: str("GROQ_API_KEY"),
+  GROQ_STT_MODEL: str("GROQ_STT_MODEL", "whisper-large-v3-turbo"),
 
   DB_PATH: str("DB_PATH", "data/annarelay.db"),
 };

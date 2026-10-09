@@ -9,6 +9,7 @@ import { demands } from "./routes/demands";
 import { errorHandler, UPLOAD_DIR } from "./routes/http";
 import { misc } from "./routes/misc";
 import { offers } from "./routes/offers";
+import { transcribeRouter } from "./routes/transcribe";
 import { startScheduler } from "./scheduler";
 import { startBot } from "./telegram/bot";
 
@@ -22,6 +23,7 @@ export function createApp() {
   app.use(offers);
   app.use(demands);
   app.use(assignments);
+  app.use(transcribeRouter);
   app.use((_req, res) => {
     res.status(404).json({ error: { code: "NOT_FOUND", message: "No such endpoint" } });
   });

@@ -13,6 +13,7 @@ const DEFAULT_MODEL: Record<string, string> = {
   gemini: "gemini-2.5-flash",
   openai: "gpt-4o-mini",
   anthropic: "claude-haiku-5-5",
+  groq: "openai/gpt-oss-120b",
 };
 
 export function llmModel(): string {
@@ -21,6 +22,7 @@ export function llmModel(): string {
 
 let gemini: GoogleGenAI | null = null;
 let openai: OpenAI | null = null;
+let groq: OpenAI | null = null;
 let anthropic: Anthropic | null = null;
 
 export async function completeJson(system: string, user: string, image?: ImageInput, timeoutMs = 8000): Promise<string> {
@@ -51,6 +53,18 @@ export async function completeJson(system: string, user: string, image?: ImageIn
           messages: [{ role: "system", content: system }, { role: "user", content }],
           response_format: { type: "json_object" },
           temperature: 0,
+        });
+        return res.choices[0]?.message?.content ?? "";
+      }
+      case "groq": {
+        // OpenAI-compatible API. gpt-oss models are text-only, so photos are skipped (photo_check stays advisory/null).
+        groq ??= new OpenAI({ apiKey: config.LLM_API_KEY, baseURL: "https://api.groq.com/openai/v1" });
+        const res = await groq.chat.completions.create({
+          model,
+          messages: [{ role: "system", content: system }, { role: "user", content: user }],
+          response_format: { type: "json_object" },
+          temperature: 0,
+          ...({ reasoning_effort: "low" } as object),
         });
         return res.choices[0]?.message?.content ?? "";
       }

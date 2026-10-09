@@ -68,6 +68,24 @@ async function callStructured<T>(
   return cacheGet<T>(key) ?? null;
 }
 
+// ---- time sanity (code, not the model, has the last word) ----
+// Spoken times are 12-hour-ambiguous ("11 baje"). If the model lands a future time in the past,
+// move it forward 12 h (then 24 h); if it lands a past time in the future, move it back.
+const H12 = 12 * 3600_000;
+export function fixFuture(iso: string | null, ref = nowMs()): string | null {
+  if (!iso) return iso;
+  let t = Date.parse(iso);
+  for (let i = 0; i < 2 && t <= ref; i++) t += H12;
+  return t > ref ? new Date(t).toISOString() : null;
+}
+export function fixPast(iso: string | null, ref = nowMs()): string | null {
+  if (!iso) return iso;
+  let t = Date.parse(iso);
+  const grace = 15 * 60000;
+  for (let i = 0; i < 2 && t > ref + grace; i++) t -= H12;
+  return t <= ref + grace ? new Date(t).toISOString() : null;
+}
+
 // ---- offers ----
 
 const OFFER_FIELDS: OfferMissingField[] = ["estimated_meals", "diet", "cooked_at", "safe_until"];
@@ -102,7 +120,8 @@ export async function parseOffer(transcript: string, image?: ImageInput): Promis
   return {
     ...finishOffer({
       items: res.items.filter((i) => i.name.trim()),
-      estimated_meals: res.estimated_meals, diet: res.diet, cooked_at: res.cooked_at, safe_until: res.safe_until,
+      estimated_meals: res.estimated_meals, diet: res.diet,
+      cooked_at: fixPast(res.cooked_at), safe_until: fixFuture(res.safe_until),
       pickup_notes: res.pickup_notes, photo_check: image ? res.photo_check : null,
       followup_question: res.followup_question,
     }),
@@ -185,7 +204,7 @@ export async function parseDemand(transcript: string): Promise<ParsedDemand & { 
       source: "llm",
     };
   }
-  return { ...finishDemand(res), source: "llm" };
+  return { ...finishDemand({ ...res, needed_by: fixFuture(res.needed_by) }), source: "llm" };
 }
 
 export function mockParseDemand(transcript: string, ref = nowMs()): ParsedDemand {
@@ -213,7 +232,7 @@ export function mockParseDemand(transcript: string, ref = nowMs()): ParsedDemand
 export async function extractReplyDetails(text: string): Promise<ReplyDetails> {
   if (config.LLM_PROVIDER === "mock") return mockReplyDetails(text);
   const res = await callStructured("reply", replyDetailsSystemPrompt(nowMs()), `Reply:\n"""${text}"""`, ReplyDetailsSchema);
-  return res ?? mockReplyDetails(text);
+  return res ? { ...res, eta_iso: fixFuture(res.eta_iso) } : mockReplyDetails(text);
 }
 
 export function mockReplyDetails(text: string, ref = nowMs()): ReplyDetails {

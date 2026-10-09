@@ -2,6 +2,7 @@
 import { Router } from "express";
 import { config } from "../config";
 import { layaStatus, llmStatus } from "../ai/status";
+import { sttStatus } from "../ai/stt";
 import { getAssignmentRow, getRestaurant, listOfferRows, listRestaurants, updateAssignment } from "../db/repo";
 import { seed } from "../db/seed";
 import { board, computeStats, listRecipients } from "../domain/board";
@@ -14,7 +15,7 @@ import { telegramStatus } from "../telegram/bot";
 export const misc = Router();
 
 misc.get("/api/health", (_req, res) => {
-  res.json({ ok: true, llm: llmStatus(), laya: layaStatus(), telegram: telegramStatus() });
+  res.json({ ok: true, llm: llmStatus(), laya: layaStatus(), telegram: telegramStatus(), stt: sttStatus() });
 });
 
 misc.get("/api/restaurants", (_req, res) => {
