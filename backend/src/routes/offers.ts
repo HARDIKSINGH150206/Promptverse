@@ -5,7 +5,7 @@ import { intakeGuardrail } from "../ai/guardrail";
 import { parseOffer } from "../ai/parse";
 import { addEvent, getRestaurant, insertOffer } from "../db/repo";
 import { nowIso, nowMs } from "../domain/clock";
-import { fmtTime, pct } from "../domain/format";
+import { fmtTime } from "../domain/format";
 import { newId } from "../domain/ids";
 import { runMatching } from "../domain/matching";
 import { offerDetail } from "../domain/timeline";
@@ -76,9 +76,13 @@ offers.post("/api/offers", async (req, res) => {
   const what = body.items.map((i) => i.name).join(", ") || "food";
   addEvent(row.id, "offer_created",
     `${restaurant.name} listed ${body.meal_count} ${body.diet === "veg" ? "veg" : "non-veg"} meals (${what}), safe until ${fmtTime(row.safe_until)}. Diet and safety checklist confirmed.`);
-  if (guardrail?.safety_concern_probability != null && guardrail.safety_concern_probability > 0.3) {
+  // OfferDetail has no guardrail field, so the timeline event carries the full explanation.
+  if (guardrail?.needs_confirmation) {
+    const safety = guardrail.safety_concern_probability;
+    const confirmed = safety != null && safety > 0.3 ? "the diet and the safety checklist" : "the diet";
+    const reasons = guardrail.reasons.length ? guardrail.reasons.join("; ") : "automatic check asked for confirmation";
     addEvent(row.id, "guardrail_flag",
-      `Safety check (${guardrail.source}) flagged a possible concern (${pct(guardrail.safety_concern_probability)}); the restaurant confirmed the safety checklist.`);
+      `Intake check (${guardrail.source}): ${reasons}. The restaurant confirmed ${confirmed}.`);
   }
   addEvent(row.id, "matching_started", "Matching started: only recipients who already need this food, ranked by reliability.");
   runMatching(row.id);
