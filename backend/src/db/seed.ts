@@ -49,6 +49,10 @@ export function seed(opts: { keepTelegramLinks?: boolean } = {}): void {
           link_code: string; telegram_chat_id: string;
         }[])
       : [];
+    // judges who scanned the QR stay through a demo reset (stats reset to their simulated starting point)
+    const judges = opts.keepTelegramLinks
+      ? (db.prepare("SELECT * FROM recipients WHERE id LIKE 'rc_judge_%'").all() as Record<string, unknown>[])
+      : [];
     clearAll();
 
     const insR = db.prepare("INSERT INTO restaurants (id, name, area, lat, lng) VALUES (@id, @name, @area, @lat, @lng)");
@@ -74,6 +78,16 @@ export function seed(opts: { keepTelegramLinks?: boolean } = {}): void {
     }
     for (const l of links) {
       db.prepare("UPDATE recipients SET telegram_chat_id = ? WHERE link_code = ?").run(l.telegram_chat_id, l.link_code);
+    }
+    for (const j of judges) {
+      db.prepare(
+        `INSERT INTO recipients (id, name, type, area, lat, lng, telegram_chat_id, link_code, completed, cancelled, no_show, avg_response_secs, is_simulated_history, language)
+         VALUES (@id, @name, @type, @area, @lat, @lng, @telegram_chat_id, @link_code, 14, 1, 0, 90, 1, @language)`
+      ).run({ language: null, ...j });
+      insD.run({
+        id: `d_${String(j.id).slice(3)}`, recipient_id: j.id, people_count: 20, meals_matched: 0, diet: "any",
+        needed_by: neededBy, notes: "Judge shelter (simulated demand)", status: "open", created_at: addSecs(now, -60),
+      });
     }
 
     seedHistory(now, insD);

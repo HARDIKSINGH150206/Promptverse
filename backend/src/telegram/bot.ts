@@ -1,15 +1,18 @@
-import { Bot, InlineKeyboard, type Context } from "grammy";
+import { Bot, InlineKeyboard, InputFile, type Context } from "grammy";
 import { config } from "../config";
+import { transcribe } from "../ai/stt";
+import { synthesize } from "../ai/tts";
 import {
   getAssignmentRow, getOfferRow, getRecipient, getRecipientByChat, getRecipientByLinkCode, getRestaurant,
-  linkTelegram, listAssignmentRows, listAssignmentsForRecipient, listRecipientRows,
+  linkTelegram, listAssignmentRows, listAssignmentsForRecipient, listRecipientRows, setRecipientLanguage,
 } from "../db/repo";
 import { fmtTime, pct } from "../domain/format";
 import { setNotifySink, type Notice } from "../domain/notify";
 import { STANDBY_LIVE } from "../domain/offerState";
 import { REPLYABLE } from "../domain/replies";
 import { applyAction } from "../domain/transitions";
-import { AppError, type AssignmentAction, type AssignmentRow, type ReplyUnderstanding } from "../domain/types";
+import { AppError, type AssignmentAction, type AssignmentRow, type RecipientRow, type ReplyUnderstanding } from "../domain/types";
+import { JUDGE_START, joinAsJudge } from "../judge";
 import { handleReply } from "../replyFlow";
 
 let bot: Bot | null = null;
@@ -21,6 +24,11 @@ export function telegramStatus(): "ready" | "disabled" {
 
 const CB: Record<string, AssignmentAction> = {
   acc: "accept", dec: "decline", rec: "reconfirm", can: "cancel", col: "collected", sba: "standby_accept", sbd: "standby_decline",
+};
+
+const DEVANAGARI = /[ऀ-ॿ]/;
+const LANG_COMMANDS: Record<string, string> = {
+  english: "en-IN", hindi: "hi-IN", kannada: "kn-IN", tamil: "ta-IN", telugu: "te-IN", marathi: "mr-IN", bengali: "bn-IN",
 };
 
 function keyboardFor(a: AssignmentRow): InlineKeyboard | undefined {
@@ -44,7 +52,7 @@ function describe(a: AssignmentRow, kind?: Notice["kind"]): string {
 
   if (kind === "promoted") return `You're up! The first collector dropped out. Please collect ${food} now. ${where}`;
   switch (a.status) {
-    case "offered": return `New food offer: ${food}. ${where}\nTap a button, or reply in your own words (e.g. "we can only take 10").`;
+    case "offered": return `New food offer: ${food}. ${where}\nTap a button, or reply in your own words or a voice note (any language).`;
     case "accepted": return `Accepted: ${food}. ${where}\nTap Collected when you have it.`;
     case "reconfirm_sent": return `Are you still coming for ${food}? ${where}`;
     case "confirmed": return `Confirmed: ${food}. ${where}\nTap Collected when you have it.`;
@@ -59,9 +67,47 @@ function describe(a: AssignmentRow, kind?: Notice["kind"]): string {
   }
 }
 
-async function send(chatId: string, a: AssignmentRow, kind?: Notice["kind"]): Promise<void> {
-  if (!bot) return;
-  await bot.api.sendMessage(chatId, describe(a, kind), { reply_markup: keyboardFor(a) });
+/** Short spoken version of a notification, in the shelter's language. */
+function spoken(a: AssignmentRow, kind: Notice["kind"], lang: string): string | null {
+  const offer = getOfferRow(a.offer_id)!;
+  const rest = getRestaurant(offer.restaurant_id)?.name ?? "a restaurant";
+  const time = fmtTime(offer.safe_until);
+  const hi = lang.startsWith("hi");
+  const diet = offer.diet === "veg" ? (hi ? "वेज" : "veg") : hi ? "नॉन-वेज" : "non-veg";
+  if (kind === "promoted") {
+    return hi
+      ? `अब आपकी बारी है! पहला संग्राहक नहीं आ पाया। कृपया अभी ${rest} से ${a.meals} प्लेट ले लीजिए।`
+      : `You're up! The first collector dropped out. Please collect ${a.meals} meals from ${rest} now.`;
+  }
+  if (kind === "offer") {
+    return hi
+      ? `${rest} से नया ऑफ़र: ${a.meals} ${diet} प्लेट, ${a.distance_km} किलोमीटर दूर, ${time} तक सुरक्षित। Accept दबाइए, या वॉइस नोट में जवाब दीजिए।`
+      : `New food offer from ${rest}: ${a.meals} ${diet} meals, ${a.distance_km} kilometres away, safe until ${time}. Tap Accept, or just reply with a voice note.`;
+  }
+  if (kind === "reconfirm") {
+    return hi ? `क्या आप अभी भी ${rest} से ${a.meals} प्लेट लेने आ रहे हैं?` : `Quick check: are you still coming for the ${a.meals} meals from ${rest}?`;
+  }
+  if (kind === "standby") {
+    return hi
+      ? `क्या आप ${rest} के ${a.meals} प्लेट के लिए बैकअप बन सकते हैं? पहला संग्राहक न आए, तभी बुलाएँगे।`
+      : `Could you stand by as a backup for ${a.meals} meals from ${rest}? We'd only call you if the first collector drops out.`;
+  }
+  return null;
+}
+
+async function sendVoice(chatId: string, text: string, lang: string): Promise<void> {
+  if (!bot || config.TELEGRAM_VOICE === "off") return;
+  const mp3 = await synthesize(text, lang, "mp3");
+  if (!mp3) return;
+  await bot.api.sendVoice(chatId, new InputFile(Buffer.from(mp3, "base64"), "annarelay.mp3"));
+}
+
+async function send(r: RecipientRow, a: AssignmentRow, kind?: Notice["kind"]): Promise<void> {
+  if (!bot || !r.telegram_chat_id) return;
+  await bot.api.sendMessage(r.telegram_chat_id, describe(a, kind), { reply_markup: keyboardFor(a) });
+  const lang = r.language ?? "en-IN";
+  const voice = kind ? spoken(a, kind, lang) : null;
+  if (voice) await sendVoice(r.telegram_chat_id, voice, lang).catch((e) => console.warn("[telegram] voice note failed:", e.message));
 }
 
 async function onNotice(n: Notice): Promise<void> {
@@ -69,7 +115,24 @@ async function onNotice(n: Notice): Promise<void> {
   if (!a) return;
   const r = getRecipient(a.recipient_id);
   if (!r?.telegram_chat_id) return;
-  await send(r.telegram_chat_id, a, n.kind);
+  await send(r, a, n.kind);
+}
+
+/** Free text (typed, or transcribed from a voice note) from a linked chat. */
+async function handleFreeText(ctx: Context, r: RecipientRow, text: string): Promise<void> {
+  const target = listAssignmentsForRecipient(r.id, [...REPLYABLE])[0];
+  if (!target) {
+    await ctx.reply("You have no active offers right now. We'll message you when food is available.");
+    return;
+  }
+  await ctx.replyWithChatAction("typing").catch(() => {});
+  const { understood: u } = await handleReply(target.id, text);
+  const a = getAssignmentRow(target.id)!;
+  if (u.needs_clarification) {
+    await ctx.reply(u.clarification_question ?? "Sorry, could you say that another way?", { reply_markup: keyboardFor(a) });
+    return;
+  }
+  await ctx.reply(confirmation(u, a), { reply_markup: keyboardFor(a) });
 }
 
 export async function startBot(): Promise<void> {
@@ -81,6 +144,16 @@ export async function startBot(): Promise<void> {
 
   bot.command("start", async (ctx) => {
     const code = ctx.match?.trim();
+    if (code && code.toUpperCase() === JUDGE_START) {
+      const r = joinAsJudge(String(ctx.chat.id), ctx.from?.first_name);
+      await ctx.reply(
+        `Welcome, judge! You're now *${r.name}*, a shelter 0.8 km from Koramangala Kitchen that needs food for 20 people tonight.\n\n` +
+          "When the restaurant lists food on stage, the offer lands right here. Tap Accept, or reply in any language, even with a voice note (try Hindi).",
+        { parse_mode: "Markdown" }
+      );
+      void sendVoice(String(ctx.chat.id), "Welcome to AnnaRelay! When food is listed on stage, the offer will come to you right here.", "en-IN").catch(() => {});
+      return;
+    }
     if (!code) {
       // Demo convenience: pick which (simulated) recipient this chat speaks for.
       const k = new InlineKeyboard();
@@ -90,6 +163,15 @@ export async function startBot(): Promise<void> {
     }
     await link(ctx, code);
   });
+
+  for (const [cmd, lang] of Object.entries(LANG_COMMANDS)) {
+    bot.command(cmd, async (ctx) => {
+      const r = getRecipientByChat(String(ctx.chat.id));
+      if (!r) return void ctx.reply("Link this chat first with /start.");
+      setRecipientLanguage(r.id, lang);
+      await ctx.reply(`Voice notes will now be in ${cmd[0].toUpperCase()}${cmd.slice(1)}.`);
+    });
+  }
 
   bot.callbackQuery(/^lnk:(.+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
@@ -125,20 +207,37 @@ export async function startBot(): Promise<void> {
       await ctx.reply("This chat isn't linked yet. Send /start <link code>.");
       return;
     }
-    const target = listAssignmentsForRecipient(r.id, [...REPLYABLE])[0];
-    if (!target) {
-      await ctx.reply("You have no active offers right now. We'll message you when food is available.");
+    if (DEVANAGARI.test(ctx.message.text) && r.language !== "hi-IN") setRecipientLanguage(r.id, "hi-IN");
+    await handleFreeText(ctx, r, ctx.message.text);
+  });
+
+  // Voice notes: Telegram sends OGG/Opus, which Sarvam accepts directly.
+  bot.on(["message:voice", "message:audio"], async (ctx) => {
+    const r = getRecipientByChat(String(ctx.chat.id));
+    if (!r) {
+      await ctx.reply("This chat isn't linked yet. Send /start <link code>.");
       return;
     }
     await ctx.replyWithChatAction("typing").catch(() => {});
-    const { understood: u } = await handleReply(target.id, ctx.message.text);
-    const a = getAssignmentRow(target.id)!;
-
-    if (u.needs_clarification) {
-      await ctx.reply(u.clarification_question ?? "Sorry, could you say that another way?", { reply_markup: keyboardFor(a) });
-      return;
+    try {
+      const file = await ctx.getFile();
+      const res = await fetch(`https://api.telegram.org/file/bot${config.TELEGRAM_BOT_TOKEN}/${file.file_path}`);
+      if (!res.ok) throw new Error(`download failed (${res.status})`);
+      const audio = Buffer.from(await res.arrayBuffer());
+      const media = ctx.message.voice ?? ctx.message.audio;
+      const mime = media?.mime_type ?? "audio/ogg";
+      const t = await transcribe(audio, mime, file.file_path?.split("/").pop() ?? "voice.ogg", { language_code: "unknown" });
+      if (!t.text) {
+        await ctx.reply("Sorry, I couldn't hear anything in that voice note. Could you try again or type it?");
+        return;
+      }
+      if (t.language_code && t.language_code !== r.language) setRecipientLanguage(r.id, t.language_code);
+      await ctx.reply(`🎙 Heard (${t.language_code ?? "auto"}): “${t.text}”`);
+      await handleFreeText(ctx, getRecipient(r.id)!, t.text);
+    } catch (err) {
+      console.warn("[telegram] voice note failed:", (err as Error).message);
+      await ctx.reply("Sorry, I couldn't process that voice note. Please type your reply or use the buttons.");
     }
-    await ctx.reply(confirmation(u, a), { reply_markup: keyboardFor(a) });
   });
 
   bot.catch((err) => console.warn("[telegram] handler error:", err.message));
@@ -182,7 +281,7 @@ async function link(ctx: Context, code: string): Promise<void> {
     return;
   }
   linkTelegram(r.id, String(ctx.chat.id));
-  await ctx.reply(`Linked to ${r.name}. Food offers will arrive here. Tap the buttons, or just reply in your own words (any language).`);
+  await ctx.reply(`Linked to ${r.name}. Food offers will arrive here as a message and a voice note. Tap the buttons, or reply in your own words or a voice note (any language). Change voice language with /hindi or /english.`);
 }
 
 export async function stopBot(): Promise<void> {

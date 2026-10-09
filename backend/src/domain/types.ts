@@ -196,6 +196,8 @@ export interface RecipientRow {
   telegram_chat_id: string | null; link_code: string;
   completed: number; cancelled: number; no_show: number; avg_response_secs: number;
   is_simulated_history: number;
+  /** preferred language for Telegram (BCP-47), learned from the shelter's own messages */
+  language?: string | null;
 }
 
 export interface DemandRow {

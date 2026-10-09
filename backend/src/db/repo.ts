@@ -32,6 +32,9 @@ export function linkTelegram(recipientId: string, chatId: string): void {
   db.prepare("UPDATE recipients SET telegram_chat_id = NULL WHERE telegram_chat_id = ?").run(chatId);
   db.prepare("UPDATE recipients SET telegram_chat_id = ? WHERE id = ?").run(chatId, recipientId);
 }
+export function setRecipientLanguage(id: string, language: string): void {
+  db.prepare("UPDATE recipients SET language = ? WHERE id = ?").run(language, id);
+}
 export function bumpRecipientStat(id: string, field: "completed" | "cancelled" | "no_show"): void {
   db.prepare(`UPDATE recipients SET ${field} = ${field} + 1 WHERE id = ?`).run(id);
 }

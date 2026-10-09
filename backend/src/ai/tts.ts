@@ -29,7 +29,7 @@ export function sentences(text: string): string[] {
   return out;
 }
 
-export async function synthesize(text: string, lang: string): Promise<string | null> {
+export async function synthesize(text: string, lang: string, codec: "wav" | "mp3" = "wav"): Promise<string | null> {
   if (!config.SARVAM_API_KEY || !text.trim()) return null;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 12000);
@@ -43,6 +43,7 @@ export async function synthesize(text: string, lang: string): Promise<string | n
         model: config.SARVAM_TTS_MODEL,
         speaker: config.SARVAM_TTS_SPEAKER,
         speech_sample_rate: 22050,
+        output_audio_codec: codec,
         pace: 1.1,
       }),
       signal: controller.signal,

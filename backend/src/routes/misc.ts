@@ -13,6 +13,7 @@ import { tick } from "../scheduler";
 import { bus } from "../realtime/bus";
 import { streamHandler } from "../realtime/stream";
 import { telegramStatus } from "../telegram/bot";
+import { judgeLink, judgeQrSvg, listJudges } from "../judge";
 
 export const misc = Router();
 
@@ -46,6 +47,25 @@ misc.get("/api/impact/:restaurantId", (req, res) => {
     is_simulated: true,
   };
   res.json(card);
+});
+
+// ---- Judge mode: scan a QR, become a shelter on Telegram, receive the live offer ----
+
+misc.get("/api/judge", (_req, res) => {
+  const link = judgeLink();
+  res.json({
+    enabled: !!link && telegramStatus() === "ready",
+    link,
+    qr_svg_url: link ? "/api/judge/qr.svg" : null,
+    bot_username: config.TELEGRAM_BOT_USERNAME || null,
+    judges: listJudges().map((j) => ({ id: j.id, name: j.name, telegram_linked: !!j.telegram_chat_id })),
+  });
+});
+
+misc.get("/api/judge/qr.svg", async (_req, res) => {
+  const svg = await judgeQrSvg();
+  if (!svg) throw new AppError(404, "NOT_FOUND", "Judge mode needs TELEGRAM_BOT_USERNAME");
+  res.type("image/svg+xml").set("Cache-Control", "no-cache").send(svg);
 });
 
 // ---- Demo controls (labelled "Demo control" in the UI) ----

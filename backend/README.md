@@ -65,6 +65,12 @@ See [`.env.example`](.env.example). Timers are demo-scaled: accept 45 s, reconfi
 - **`GET /api/stream`** (SSE) pushes `board`, `offer`, `timeline` and `call.*` events as they happen, so the UI renders live with no polling.
 - Frontend build guide: [`FRONTEND_VOICE_AGENT_SPEC.md`](FRONTEND_VOICE_AGENT_SPEC.md). Test without a mic: `npx tsx scripts/agent-check.ts restaurant|unsafe|hindi|recipient`.
 
+## Telegram voice notes + judge mode (contract v3.1)
+
+- **Voice in:** a shelter can reply to any offer with a Telegram voice note in Hindi, Kannada, English and other languages. Sarvam transcribes it, the bot shows "🎙 Heard: …", and it's handled exactly like a typed reply (same rule table).
+- **Voice out:** offers, reconfirms, standby requests and promotions also arrive as a spoken voice note (Sarvam TTS, MP3) in the shelter's language. The language is learned from their messages, or set with `/hindi`, `/english`, `/kannada` and so on. Turn off with `TELEGRAM_VOICE=off`.
+- **Judge mode:** show `http://localhost:4000/api/judge/qr.svg` on the projector. A judge scans it (`t.me/<bot>?start=JUDGE`) and becomes "<Name>'s Shelter", 0.8 km from Koramangala Kitchen with an open demand for 20 people and a good simulated record. They rank first, so the stage offer lands on their phone. Judges survive demo resets. `GET /api/judge` lists who joined.
+
 ## Decision model: the LLM, with code-side rules (Laya evaluated and not used)
 
 `DECISION_PROVIDER=llm` (default): the LLM (Groq) answers the same typed questions Laya would (choice / yes-no, with probabilities). Plain code still decides everything that matters: the 70 % intent threshold, the fixed reply table, the diet confirmation rules, and a deterministic **safety keyword floor** ("left out", "since afternoon", "smells" -> at least 75 % concern).

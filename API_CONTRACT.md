@@ -8,6 +8,8 @@
 > **v2.1 (additive, approved by the team):** `POST /api/transcribe` (multilingual speech-to-text) and the `stt` field on `GET /api/health`. Nothing existing changed.
 >
 > **v3 (additive, approved by the team):** live word-by-word transcription (`ws /api/transcribe/stream`), the live event stream (`GET /api/stream`, SSE) and the voice-agent call (`ws /api/agent/call`). Nothing existing changed; the REST endpoints and forms keep working.
+>
+> **v3.1 (additive):** judge mode (`GET /api/judge`, `GET /api/judge/qr.svg`) and Telegram voice notes both ways.
 
 - Backend base URL (local): `http://localhost:4000`
 - Frontend (local): `http://localhost:3000`
@@ -346,6 +348,14 @@ An AI phone-style call that replaces the intake forms. `restaurant_id` / `recipi
 `CallDraft` (restaurant): `{ restaurant_id?, restaurant_name, items?: OfferItem[], meal_count?, diet?: "veg"|"nonveg", cooked_at?, safe_until?, pickup_notes? }`. (Recipient): `{ recipient_id?, recipient_name, people_count?, diet?: Diet, needed_by?, max_distance_km?, notes? }`. Times are ISO UTC.
 
 **Safety rules (same as the forms):** the agent reads the details back and the caller must say **yes** (that sets `diet_confirmed`), then it reads the safety checklist (covered, kept hot or chilled, never served on plates) and the caller must say **yes** again (that sets `safety_checklist_confirmed`). A "yes" counts only at ≥ 85 % confidence; any change to the details resets both. The offer is then created through the same validation as `POST /api/offers`. A "no" to the checklist ends the call without listing the food.
+
+### Judge mode (v3.1)
+A judge scans a QR code, opens the Telegram bot, and becomes a shelter (simulated history, about 0.8 km from Koramangala Kitchen, needs food for 20 people). When food is listed on stage, the offer lands on the judge's phone.
+- `GET /api/judge` → `{ "enabled": boolean, "link": string | null, "qr_svg_url": string | null, "bot_username": string | null, "judges": { "id", "name", "telegram_linked" }[] }`
+- `GET /api/judge/qr.svg` → `image/svg+xml` QR code of `link` (`t.me/<bot>?start=JUDGE`). Show it full-screen on the projector.
+- Judges appear in `Board.recipients` like any recipient (ids start with `rc_judge_`) and survive `POST /api/demo/reset`.
+
+**Telegram (v3.1, backend-only behaviour):** offers, reconfirms, standby requests and promotions also arrive as **voice notes** in the shelter's language (learned from their messages, or set with `/hindi`, `/english`, ...). Shelters can **reply with a voice note** in any supported language; it is transcribed and handled exactly like a typed reply.
 
 ### Static files
 `GET /uploads/<file>`
