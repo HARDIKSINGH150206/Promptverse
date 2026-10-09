@@ -117,6 +117,9 @@ export function mockGuardrail(transcript: string, items: OfferItem[], extractedD
   if (extractedDiet === null) reasons.push("Diet wasn't stated — please confirm veg or non-veg");
   else if (!agrees) reasons.push(`Diet check reads this as ${word(label)} (${pct(p)}) but the note was read as ${word(extractedDiet)}`);
   if (safety > 0.3) reasons.push(`Message suggests the food may be unsafe (safety concern ${pct(safety)})`);
+  // backend's plain-code keyword floor adds its own reason
+  const keyword = transcript.match(SAFETY_RE)?.[0];
+  if (keyword) reasons.push(`Message mentions "${keyword}" (keyword check)`);
   return {
     source: "mock",
     diet_check: { label, probability: p, agrees_with_extraction: agrees },
