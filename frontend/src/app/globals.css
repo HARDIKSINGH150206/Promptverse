@@ -39,7 +39,7 @@
   --color-mist: #f4f4f5;
   --color-zinc: #e4e4e7;
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
   --radius-card: 1.25rem;
@@ -80,7 +80,7 @@ html {
 body {
   background: var(--color-navy);
   color: var(--color-white);
-  font-feature-settings: "cv11", "ss01";
+  font-feature-settings: "ss01";
   -webkit-font-smoothing: antialiased;
 }
 
@@ -94,11 +94,11 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* display type, as measured on the reference: Inter 500, -0.025em, line-height 1 */
+/* display type: Plus Jakarta Sans 500 with tight tracking (it sets wider than Inter) */
 .display {
   font-weight: 500;
-  letter-spacing: -0.025em;
-  line-height: 1;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
 }
 
 /* hairline grid texture: an SVG pattern of 1px lines (flat, no gradients) */
