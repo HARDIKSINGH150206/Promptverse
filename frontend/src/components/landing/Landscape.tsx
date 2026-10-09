@@ -21,19 +21,21 @@ function rng(seed: number): () => number {
 /** A mountain ridge: linear interpolation between random peaks (sharp summits) plus a fine jitter octave. */
 function ridge(seed: number, base: number, amp: number, step: number): string {
   const r = rng(seed);
-  const coarse = Array.from({ length: Math.ceil(W / step) + 2 }, () => r());
-  const fine = Array.from({ length: Math.ceil(W / (step / 4)) + 2 }, () => r());
+  const coarse = Array.from({ length: Math.ceil((W + 192) / step) + 2 }, () => r());
+  const fine = Array.from({ length: Math.ceil((W + 192) / (step / 4)) + 2 }, () => r());
   const at = (arr: number[], t: number) => {
     const i = Math.floor(t);
     const f = t - i;
     return arr[i] * (1 - f) + arr[i + 1] * f;
   };
-  let d = `M0 ${H}`;
-  for (let x = 0; x <= W; x += 8) {
-    const v = at(coarse, x / step) * 0.82 + at(fine, x / (step / 4)) * 0.18;
+  const OVER = 96;
+  let d = `M${-OVER} ${H + OVER}`;
+  for (let x = -OVER; x <= W + OVER; x += 8) {
+    const t = (x + OVER) / step;
+    const v = at(coarse, t) * 0.82 + at(fine, (x + OVER) / (step / 4)) * 0.18;
     d += ` L${x} ${(base - amp * v).toFixed(1)}`;
   }
-  return `${d} L${W} ${H} Z`;
+  return `${d} L${W + OVER} ${H + OVER} Z`;
 }
 
 // Peaks stay below y≈380 so wide, short panels (which keep the bottom of the art) never crop a summit.
@@ -43,6 +45,17 @@ const RIDGES = {
   near: ridge(11, 770, 130, 110),
   forest: ridge(19, 850, 70, 55),
 };
+
+// Faint sky dots for the dusk scene (deterministic).
+const STARS = (() => {
+  const r = rng(97);
+  return Array.from({ length: 90 }, () => ({ x: r() * W, y: r() * 420, s: 0.6 + r() * 1.1, d: r() * 4 }));
+})();
+
+/** Parallax offset for a layer: driven by CSS variables a parent sets (--px pointer, --sy scroll). */
+const layer = (pointer: number, scroll: number) => ({
+  transform: `translate(calc(var(--px, 0) * ${pointer}px), calc(var(--sy, 0) * ${scroll}px))`,
+});
 
 const PALETTE = {
   day: {
@@ -65,9 +78,12 @@ const PALETTE = {
   },
 } as const;
 
-export function Landscape({ variant = "day", className }: { variant?: "day" | "dusk"; className?: string }) {
+export function Landscape({
+  variant = "day", parallax = false, className,
+}: { variant?: "day" | "dusk"; parallax?: boolean; className?: string }) {
   const id = useId().replace(/:/g, "");
   const p = PALETTE[variant];
+  const L = (pointer: number, scroll: number) => (parallax ? layer(pointer, scroll) : undefined);
   const g = (name: string) => `${id}-${name}`;
   const grad = (name: string, [a, b]: readonly [string, string], y1 = 0.35) => (
     <linearGradient id={g(name)} x1="0" y1={y1} x2="0" y2="1">
@@ -97,18 +113,39 @@ export function Landscape({ variant = "day", className }: { variant?: "day" | "d
         </filter>
       </defs>
 
-      <rect width={W} height={H} fill={`url(#${g("sky")})`} />
+      <rect x={-96} y={-96} width={W + 192} height={H + 192} fill={`url(#${g("sky")})`} />
+      {variant === "dusk" ? (
+        <g style={L(-3, 0.22)}>
+          {STARS.map((st, i) => (
+            <circle key={i} cx={st.x} cy={st.y} r={st.s} fill="#F2EFE9" className={parallax ? "animate-blink" : undefined} opacity={0.5} style={{ animationDelay: `${st.d}s` }} />
+          ))}
+        </g>
+      ) : null}
       {variant === "day" ? <circle cx={1150} cy={300} r={170} fill="#ffffff" opacity={0.35} filter={`url(#${g("blur")})`} /> : null}
 
-      <path d={RIDGES.far} fill={`url(#${g("far")})`} />
-      <ellipse cx={720} cy={610} rx={900} ry={60} fill="#ffffff" opacity={p.mist * 0.7} filter={`url(#${g("blur")})`} />
-      <path d={RIDGES.mid} fill={`url(#${g("mid")})`} />
-      <ellipse cx={400} cy={690} rx={700} ry={55} fill="#ffffff" opacity={p.mist * 0.8} filter={`url(#${g("blur")})`} />
-      <ellipse cx={1200} cy={715} rx={600} ry={50} fill="#ffffff" opacity={p.mist * 0.6} filter={`url(#${g("blur")})`} />
-      <path d={RIDGES.near} fill={`url(#${g("near")})`} />
-      <ellipse cx={800} cy={800} rx={900} ry={45} fill="#ffffff" opacity={p.mist * 0.7} filter={`url(#${g("blur")})`} />
-      <path d={RIDGES.forest} fill={`url(#${g("forest")})`} />
-      <path d={`M0 ${H} L0 862 Q 420 842 860 ${H} Z`} fill={`url(#${g("field")})`} />
+      <g style={L(-6, 0.18)}>
+        <path d={RIDGES.far} fill={`url(#${g("far")})`} />
+      </g>
+      <g className={parallax ? "animate-mist" : undefined}>
+        <ellipse cx={720} cy={610} rx={900} ry={60} fill="#ffffff" opacity={p.mist * 0.7} filter={`url(#${g("blur")})`} />
+      </g>
+      <g style={L(-12, 0.13)}>
+        <path d={RIDGES.mid} fill={`url(#${g("mid")})`} />
+      </g>
+      <g className={parallax ? "animate-mist-slow" : undefined}>
+        <ellipse cx={400} cy={690} rx={700} ry={55} fill="#ffffff" opacity={p.mist * 0.8} filter={`url(#${g("blur")})`} />
+        <ellipse cx={1200} cy={715} rx={600} ry={50} fill="#ffffff" opacity={p.mist * 0.6} filter={`url(#${g("blur")})`} />
+      </g>
+      <g style={L(-20, 0.08)}>
+        <path d={RIDGES.near} fill={`url(#${g("near")})`} />
+      </g>
+      <g className={parallax ? "animate-mist" : undefined}>
+        <ellipse cx={800} cy={800} rx={900} ry={45} fill="#ffffff" opacity={p.mist * 0.7} filter={`url(#${g("blur")})`} />
+      </g>
+      <g style={L(-30, 0.03)}>
+        <path d={RIDGES.forest} fill={`url(#${g("forest")})`} />
+        <path d={`M-96 ${H + 96} L-96 862 Q 420 842 860 ${H + 96} Z`} fill={`url(#${g("field")})`} />
+      </g>
     </svg>
   );
 }

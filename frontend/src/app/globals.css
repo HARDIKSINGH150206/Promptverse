@@ -49,6 +49,8 @@
   --animate-pulse-ring: pulse-ring 1.8s ease-out infinite;
   --animate-dash: dash 1.2s linear infinite;
   --animate-blink: blink 2.4s ease-in-out infinite;
+  --animate-mist: mist 26s ease-in-out infinite alternate;
+  --animate-mist-slow: mist 38s ease-in-out infinite alternate-reverse;
 
   @keyframes enter {
     from { opacity: 0; transform: translateY(8px); }
@@ -65,6 +67,10 @@
   }
   @keyframes dash {
     to { stroke-dashoffset: -16; }
+  }
+  @keyframes mist {
+    from { transform: translateX(-60px); }
+    to { transform: translateX(60px); }
   }
   @keyframes blink {
     0%, 100% { opacity: 0.35; }

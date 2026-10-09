@@ -11,7 +11,7 @@ import { cx } from "@/lib/cx";
 import { Logo } from "../Logo";
 import { ReliabilityBar } from "../ReliabilityBar";
 import { ButtonLink, Skeleton } from "../ui";
-import { Landscape } from "./Landscape";
+import { HeroBackdrop } from "./HeroBackdrop";
 import { Container } from "./shared";
 
 const FINISHED = ["collected", "partially_collected", "fallback", "expired"];
@@ -160,10 +160,7 @@ export function Hero({ board }: { board: Board | null }) {
   const s = board?.stats;
   return (
     <section className="relative overflow-hidden">
-      {/* dusk landscape behind the hero, fading into ink at the top and under the product frame */}
-      <Landscape variant="dusk" className="absolute inset-x-0 top-0 h-[1000px] w-full" />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-linear-to-b from-navy via-navy/80 to-transparent" aria-hidden />
-      <div className="pointer-events-none absolute inset-x-0 top-[760px] h-[480px] bg-linear-to-b from-transparent to-navy" aria-hidden />
+      <HeroBackdrop />
       <Container className="relative pt-20 sm:pt-28">
         <div className="mx-auto max-w-5xl text-center">
           <Link
@@ -197,7 +194,11 @@ export function Hero({ board }: { board: Board | null }) {
           </div>
         </div>
 
-        <div className="relative mx-auto mt-16 max-w-[1104px] sm:mt-20">
+        {/* settles from a slight tilt to flat as you scroll (var set by HeroBackdrop) */}
+        <div
+          className="relative mx-auto mt-16 max-w-[1104px] sm:mt-20"
+          style={{ transform: "perspective(1600px) rotateX(var(--tilt, 0deg))", transformOrigin: "50% 0%" }}
+        >
           <ProductFrame board={board} />
         </div>
       </Container>
