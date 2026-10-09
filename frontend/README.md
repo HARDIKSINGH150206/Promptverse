@@ -40,12 +40,24 @@ npm run dev                  # http://localhost:3000
 ## Design rules
 
 - Matched to the Aceternity "Inference" landing page, with values measured from it: ink `#0A0A0A` canvas, warm paper `#F2EFE9` type, accent blue `#0099FF` (deeper fill `#0082FB`), amber `#F0B24A` for attention and active paths, emerald `#10B981` for success. Neutral panels `#121212` / `#1A1A1A`, hairlines `#262626`, and white/zinc light surfaces for the product frame. Tokens live in `src/app/globals.css`, and Tailwind's default palette is switched off.
-- Type: Inter for everything, display at weight 500 with `-0.025em` tracking (as on the reference), Geist Mono for captions and data labels.
+- Type: Plus Jakarta Sans for everything (display at weight 500, `-0.035em` tracking), Geist Mono for captions and data labels.
 - The primary call-to-action is the light paper pill. Amber is only for attention (risk above threshold, dropouts, the backup takeover), and text on amber is ink.
 - The mountain landscapes (hero, relay panel, CTA) are original SVG artwork drawn from seeded noise, not the reference's photo. The network section's dotted map of India comes from Natural Earth data via `dotted-map`, generated offline into `src/components/landing/indiaDots.ts`.
 - Laptop widths (1280–1536px) are the primary target; every page also works at phone width.
 - Status is never colour-only: every chip, meter and timeline event has an icon and a text label.
 - Honesty: seeded data shows a **Simulated** badge, demo buttons say **Demo control**, AI outputs show source and confidence (Laya / LLM / Mock / Rules), and illustrative landing sections are labelled as examples.
+
+## Motion
+
+All motion lives in `src/components/motion.tsx` (no animation library) and in the landing components. Every effect is static for visitors who prefer reduced motion.
+
+| Where | What |
+| --- | --- |
+| Hero background (`HeroBackdrop`) | The dusk landscape moves in parallax with scroll and the pointer; mist drifts; sky dots twinkle; a cursor spotlight reveals a dot grid. One `requestAnimationFrame` loop writes CSS variables (`--px`, `--sy`, `--mx`, `--tilt`), so React doesn't re-render. |
+| Product frame | Settles from a slight tilt to flat as you scroll. |
+| Every landing section | `<Reveal>` fades and lifts content in as it enters the viewport, staggered; `<CountUp>` animates live numbers and glides to new values. |
+| Node chart (`RelayCanvas`) | Amber current flows along each wire; a packet travels the relay in order on a 6.4 s cycle and lights each node as it arrives. |
+| Dotted map | Dots spread outward from Bengaluru when the map scrolls into view; Bengaluru pulses. |
 
 ## Screens
 
