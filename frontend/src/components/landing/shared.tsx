@@ -25,11 +25,11 @@ export function RelayRings({ className }: { className?: string }) {
   return (
     <svg viewBox="-600 -600 1200 1200" className={cx("pointer-events-none", className)} fill="none" aria-hidden>
       {rings.map((r, i) => (
-        <circle key={r} r={r} stroke="#F9F9F9" strokeOpacity={0.07 + (rings.length - i) * 0.012} strokeDasharray={i % 2 ? "3 7" : undefined} />
+        <circle key={r} r={r} stroke="#F2EFE9" strokeOpacity={0.07 + (rings.length - i) * 0.012} strokeDasharray={i % 2 ? "3 7" : undefined} />
       ))}
       {stops.map(([r, deg], i) => {
         const a = (deg * Math.PI) / 180;
-        return <circle key={i} cx={r * Math.cos(a)} cy={r * Math.sin(a)} r={i === 2 ? 6 : 4} fill={i === 2 ? "#FF6E42" : "#F9F9F9"} fillOpacity={i === 2 ? 1 : 0.5} />;
+        return <circle key={i} cx={r * Math.cos(a)} cy={r * Math.sin(a)} r={i === 2 ? 6 : 4} fill={i === 2 ? "#F0B24A" : "#F2EFE9"} fillOpacity={i === 2 ? 1 : 0.5} />;
       })}
     </svg>
   );

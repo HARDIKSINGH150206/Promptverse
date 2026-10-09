@@ -94,7 +94,7 @@ export function RelayCanvas() {
                 <path
                   key={i}
                   d={curve(e)}
-                  stroke={e[4] ? "#FF6E42" : "#F9F9F9"}
+                  stroke={e[4] ? "#F0B24A" : "#F2EFE9"}
                   strokeOpacity={e[4] ? 1 : 0.3}
                   strokeWidth={e[4] ? 2 : 1.5}
                   strokeDasharray={e[4] ? undefined : "4 4"}

@@ -1,36 +1,43 @@
 @import "tailwindcss";
 
 /*
-  AnnaRelay design system, after the Aceternity "Inference" landing page:
-  a deep canvas, warm off-white type, hairline borders, pill buttons, big light headlines.
+  AnnaRelay design system, matched to the Aceternity "Inference" landing page.
+  Values measured from the reference: ink #0A0A0A canvas, warm "paper" #F2EFE9 type, accent blue #0099FF,
+  amber #F0B24A for active / attention, emerald #10B981 for live / success, neutral panels, zinc light surfaces.
 
-  Exactly four colours. Tailwind's default palette is switched off; every other token below is a
-  tint of these four (colour-mix / opacity), never a new hue. Flat fills only, no gradients.
-    white  #F9F9F9  type on dark, light surfaces
-    blue   #004E72  brand, success fills, accents (as the lighter "sky" tint on dark)
-    orange #FF6E42  primary CTA and attention, used sparingly; navy text on it
-    navy   #092634  the canvas
+  Token names are semantic and shared by every component:
+    navy   = ink (the canvas)          white  = paper (type on dark, light pills)
+    sky    = accent blue (text, bars)  blue   = deeper accent blue (fills with paper text)
+    orange = amber (attention; ink text on it)   emerald = success
+    snow / mist / zinc = the light product frame
 */
 :root {
-  --color-white: #f9f9f9;
-  --color-blue: #004e72;
-  --color-orange: #ff6e42;
-  --color-navy: #092634;
+  --color-navy: #0a0a0a;
+  --color-white: #f2efe9;
+  --color-sky: #0099ff;
+  --color-blue: #0082fb;
+  --color-orange: #f0b24a;
+  --color-emerald: #10b981;
 }
 
 @theme {
   --color-*: initial;
-  --color-white: #f9f9f9;
-  --color-blue: #004e72;
-  --color-orange: #ff6e42;
-  --color-navy: #092634;
+  --color-navy: #0a0a0a;
+  --color-white: #f2efe9;
+  --color-sky: #0099ff;
+  --color-blue: #0082fb;
+  --color-orange: #f0b24a;
+  --color-emerald: #10b981;
 
-  /* tints of the four */
-  --color-sky: color-mix(in srgb, #004e72 38%, #f9f9f9);      /* blue, readable on navy */
-  --color-panel: color-mix(in srgb, #f9f9f9 3.5%, #092634);   /* card on canvas */
-  --color-raised: color-mix(in srgb, #f9f9f9 7%, #092634);    /* hover / inner surface */
-  --color-line: color-mix(in srgb, #f9f9f9 10%, #092634);     /* hairline border */
-  --color-mist: color-mix(in srgb, #004e72 6%, #f9f9f9);      /* light frame background */
+  /* neutral surfaces on the ink canvas */
+  --color-panel: #121212;
+  --color-raised: #1a1a1a;
+  --color-line: #262626;
+
+  /* light product frame (zinc) */
+  --color-snow: #ffffff;
+  --color-mist: #f4f4f5;
+  --color-zinc: #e4e4e7;
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
@@ -53,8 +60,8 @@
     100% { opacity: 1; transform: scale(1); }
   }
   @keyframes pulse-ring {
-    0% { box-shadow: 0 0 0 0 color-mix(in srgb, #ff6e42 55%, transparent); }
-    100% { box-shadow: 0 0 0 16px color-mix(in srgb, #ff6e42 0%, transparent); }
+    0% { box-shadow: 0 0 0 0 color-mix(in srgb, #0099ff 55%, transparent); }
+    100% { box-shadow: 0 0 0 16px color-mix(in srgb, #0099ff 0%, transparent); }
   }
   @keyframes dash {
     to { stroke-dashoffset: -16; }
@@ -78,7 +85,7 @@ body {
 }
 
 ::selection {
-  background: var(--color-orange);
+  background: var(--color-sky);
   color: var(--color-navy);
 }
 
@@ -87,21 +94,21 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* large display type, like the reference */
+/* display type, as measured on the reference: Inter 500, -0.025em, line-height 1 */
 .display {
-  font-weight: 450;
-  letter-spacing: -0.035em;
-  line-height: 1.02;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1;
 }
 
 /* hairline grid texture: an SVG pattern of 1px lines (flat, no gradients) */
 .grid-lines {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='104' height='104'%3E%3Cpath d='M104 0V104M0 104H104' fill='none' stroke='%23F9F9F9' stroke-opacity='0.05'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='104' height='104'%3E%3Cpath d='M104 0V104M0 104H104' fill='none' stroke='%23F2EFE9' stroke-opacity='0.05'/%3E%3C/svg%3E");
 }
 
 /* dot texture for map-like panels */
 .dot-field {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14'%3E%3Ccircle cx='2' cy='2' r='1' fill='%23F9F9F9' fill-opacity='0.12'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14'%3E%3Ccircle cx='2' cy='2' r='1' fill='%23F2EFE9' fill-opacity='0.12'/%3E%3C/svg%3E");
 }
 
 /* light dashboard frame keeps its own form styling */
@@ -111,7 +118,7 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-orange);
+  outline: 2px solid var(--color-sky);
   outline-offset: 2px;
 }
 

@@ -13,15 +13,16 @@ type Size = "sm" | "md" | "lg";
 
 // pill buttons with a hairline top highlight, as in the reference
 const VARIANT: Record<Variant, string> = {
-  // orange is the one call-to-action colour; navy text keeps it readable
-  primary: "bg-orange text-navy shadow-[inset_0_1px_0_rgb(249_249_249/0.35)] hover:bg-orange/90 active:bg-orange/80",
-  // light pill
-  secondary: "bg-white text-navy shadow-[inset_0_-1px_0_rgb(9_38_52/0.12)] hover:bg-white/90 active:bg-white/80",
+  // the reference's main CTA: a light "paper" pill with ink text
+  primary: "bg-white text-navy shadow-[inset_0_-1px_0_rgb(10_10_10/0.15)] hover:bg-white/90 active:bg-white/80",
+  // accent-blue pill for in-app confirmations
+  secondary: "bg-blue text-white shadow-[inset_0_1px_0_rgb(242_239_233/0.25)] hover:bg-blue/90 active:bg-blue/80",
   // dark pill
-  onDark: "border border-line bg-raised text-white shadow-[inset_0_1px_0_rgb(249_249_249/0.08)] hover:bg-white/10",
+  onDark: "border border-line bg-raised text-white shadow-[inset_0_1px_0_rgb(242_239_233/0.08)] hover:bg-white/10",
   outline: "border border-white/15 text-white hover:border-white/35 hover:bg-white/5",
   quiet: "text-white/70 hover:bg-white/5 hover:text-white",
 };
+
 const SIZE: Record<Size, string> = {
   sm: "h-8 gap-1.5 px-3.5 text-[13px]",
   md: "h-10 gap-2 px-5 text-sm",

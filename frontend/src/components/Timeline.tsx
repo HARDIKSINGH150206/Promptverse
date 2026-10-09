@@ -50,7 +50,7 @@ const DOT: Record<Cat, string> = {
   info: "bg-sky/10 text-sky border-sky/30",
   amber: "bg-panel text-orange border-orange/70",
   red: "bg-orange text-navy border-orange",
-  green: "bg-blue text-white border-sky/40",
+  green: "bg-emerald/15 text-emerald border-emerald/50",
   grey: "bg-navy text-white/40 border-dashed border-white/20",
 };
 
@@ -59,7 +59,7 @@ const TAG: Record<Cat, string> = {
   info: "bg-sky/10 text-sky",
   amber: "border border-orange/60 text-white",
   red: "bg-orange text-navy",
-  green: "bg-blue text-white",
+  green: "bg-emerald/15 text-emerald",
   grey: "border border-dashed border-white/20 text-white/50",
 };
 

@@ -8,17 +8,17 @@ import { cx } from "@/lib/cx";
 
 /**
  * Four-colour status language. Never colour-only: every tone has an icon and a text label.
- *   good    solid blue     (collected, fulfilled)
+ *   good    emerald        (collected, fulfilled)
  *   info    sky tint       (accepted, confirmed, on standby)
- *   warn    orange outline (needs attention: reconfirm asked, standby asked)
- *   bad     solid orange   (dropouts: cancelled, no response, expired)
+ *   warn    amber outline  (needs attention: reconfirm asked, standby asked)
+ *   bad     solid amber    (dropouts: cancelled, no response, expired)
  *   neutral white tint     (offered, matching)
  *   muted   dashed, faded  (declined, released, fallback)
  */
 export type Tone = "good" | "info" | "warn" | "bad" | "neutral" | "muted";
 
 export const TONE_CLASS: Record<Tone, string> = {
-  good: "bg-blue text-white border-sky/40",
+  good: "bg-emerald/15 text-emerald border-emerald/40",
   info: "bg-sky/10 text-sky border-sky/25",
   warn: "bg-orange/10 text-white border-orange/70",
   bad: "bg-orange text-navy border-orange",
