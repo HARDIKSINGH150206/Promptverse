@@ -18,19 +18,3 @@ export function Mono({ children, className }: { children: ReactNode; className?:
   return <span className={cx("font-mono text-[11px] tracking-[0.12em] text-white/40 uppercase", className)}>{children}</span>;
 }
 
-/** Flat concentric "relay" rings with a few orbiting stops: depth without gradients or photos. */
-export function RelayRings({ className }: { className?: string }) {
-  const rings = [120, 210, 300, 390, 480, 570];
-  const stops: [number, number][] = [[210, 205], [300, 330], [390, 25], [480, 150], [570, 285], [300, 100]];
-  return (
-    <svg viewBox="-600 -600 1200 1200" className={cx("pointer-events-none", className)} fill="none" aria-hidden>
-      {rings.map((r, i) => (
-        <circle key={r} r={r} stroke="#F2EFE9" strokeOpacity={0.07 + (rings.length - i) * 0.012} strokeDasharray={i % 2 ? "3 7" : undefined} />
-      ))}
-      {stops.map(([r, deg], i) => {
-        const a = (deg * Math.PI) / 180;
-        return <circle key={i} cx={r * Math.cos(a)} cy={r * Math.sin(a)} r={i === 2 ? 6 : 4} fill={i === 2 ? "#F0B24A" : "#F2EFE9"} fillOpacity={i === 2 ? 1 : 0.5} />;
-      })}
-    </svg>
-  );
-}

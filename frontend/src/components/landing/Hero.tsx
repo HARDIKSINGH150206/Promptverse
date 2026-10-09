@@ -11,6 +11,7 @@ import { cx } from "@/lib/cx";
 import { Logo } from "../Logo";
 import { ReliabilityBar } from "../ReliabilityBar";
 import { ButtonLink, Skeleton } from "../ui";
+import { Landscape } from "./Landscape";
 import { Container } from "./shared";
 
 const FINISHED = ["collected", "partially_collected", "fallback", "expired"];
@@ -28,7 +29,7 @@ function ProductFrame({ board }: { board: Board | null }) {
   const finished = board?.offers.filter((o) => FINISHED.includes(o.status)).length ?? 0;
 
   return (
-    <div className="overflow-hidden rounded-[1.4rem] border border-white/20 bg-white text-navy shadow-[0_40px_120px_-40px_rgb(0_0_0/0.6)]">
+    <div className="overflow-hidden rounded-[1.4rem] border border-white/20 bg-snow text-navy shadow-[0_40px_120px_-30px_rgb(0_0_0/0.8)]">
       <div className="grid lg:grid-cols-[208px_1fr]">
         {/* sidebar */}
         <aside className="hidden border-r border-navy/[0.08] bg-mist p-4 lg:block">
@@ -71,7 +72,7 @@ function ProductFrame({ board }: { board: Board | null }) {
               ))
               : Array.from({ length: 4 }, (_, i) => <li key={i}><Skeleton className="my-1 h-3.5 bg-navy/[0.06]!" /></li>)}
           </ul>
-          <div className="mt-6 rounded-xl border border-navy/[0.08] bg-white p-2.5">
+          <div className="mt-6 rounded-xl border border-zinc bg-snow p-2.5">
             <p className="text-[12.5px] font-medium">Koramangala Kitchen</p>
             <p className="text-[11px] text-navy/50">Restaurant · simulated</p>
           </div>
@@ -159,7 +160,10 @@ export function Hero({ board }: { board: Board | null }) {
   const s = board?.stats;
   return (
     <section className="relative overflow-hidden">
-      <div className="grid-lines pointer-events-none absolute inset-0 opacity-60" aria-hidden />
+      {/* dusk landscape behind the hero, fading into ink at the top and under the product frame */}
+      <Landscape variant="dusk" className="absolute inset-x-0 top-0 h-[1000px] w-full" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-linear-to-b from-navy via-navy/80 to-transparent" aria-hidden />
+      <div className="pointer-events-none absolute inset-x-0 top-[760px] h-[480px] bg-linear-to-b from-transparent to-navy" aria-hidden />
       <Container className="relative pt-20 sm:pt-28">
         <div className="mx-auto max-w-5xl text-center">
           <Link

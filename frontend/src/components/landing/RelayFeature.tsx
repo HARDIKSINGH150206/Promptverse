@@ -5,7 +5,8 @@ import Link from "next/link";
 import { ArrowRight, CircleCheck } from "lucide-react";
 import { cx } from "@/lib/cx";
 import { ButtonLink } from "../ui";
-import { Container, Mono, RelayRings, SectionTitle } from "./shared";
+import { Landscape } from "./Landscape";
+import { Container, Mono, SectionTitle } from "./shared";
 
 /** Illustrative example of one offer moving through the relay (not live data; labelled "Example"). */
 const STAGES = [
@@ -57,15 +58,14 @@ export function RelayFeature() {
           <br className="hidden sm:block" /> and a full plate
         </SectionTitle>
 
-        <div className="relative mt-14 overflow-hidden rounded-[1.4rem] border border-line bg-blue">
-          <div className="dot-field absolute inset-0 opacity-50" aria-hidden />
-          <RelayRings className="absolute top-1/2 left-1/2 h-[1200px] w-[1200px] -translate-x-1/2 -translate-y-1/2" />
+        <div className="relative mt-14 overflow-hidden rounded-[1.4rem] border border-line">
+          <Landscape variant="day" className="absolute inset-0 h-full w-full" />
           <div className="relative flex min-h-[460px] items-center justify-center px-5 py-16">
-            <div key={active} className="w-full max-w-sm rounded-2xl bg-white p-5 text-navy shadow-[0_30px_80px_-30px_rgb(0_0_0/0.55)] animate-pop">
+            <div key={active} className="w-full max-w-sm rounded-2xl bg-snow p-5 text-navy shadow-[0_30px_80px_-24px_rgb(10_10_10/0.45)] animate-pop">
               <div className="flex items-center justify-between">
                 <p className="text-[15px] text-navy/65">{stage.card.title}</p>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-blue/25 bg-blue/[0.07] px-2.5 py-0.5 text-xs font-medium text-blue">
-                  <span className="size-1.5 rounded-full bg-blue" aria-hidden />
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald/30 bg-emerald/10 px-2.5 py-0.5 text-xs font-medium text-emerald">
+                  <span className="size-1.5 rounded-full bg-emerald" aria-hidden />
                   Example
                 </span>
               </div>
@@ -76,7 +76,7 @@ export function RelayFeature() {
               <ul className="mt-4 space-y-2.5">
                 {stage.card.steps.map(([label, v]) => (
                   <li key={label} className="flex items-center gap-2.5 text-sm">
-                    <CircleCheck className="size-4 shrink-0 fill-blue text-white" aria-hidden />
+                    <CircleCheck className="size-4 shrink-0 fill-emerald text-snow" aria-hidden />
                     <span className="flex-1">{label}</span>
                     <span className="tabular font-mono text-xs text-navy/50">{v}</span>
                   </li>

@@ -1,15 +1,16 @@
 import { ArrowRight } from "lucide-react";
 import { Wordmark } from "../Logo";
 import { ButtonLink } from "../ui";
-import { Container, RelayRings } from "./shared";
+import { Landscape } from "./Landscape";
+import { Container } from "./shared";
 
 export function FinalCta() {
   return (
     <section className="py-24">
       <Container>
-        <div className="relative overflow-hidden rounded-[1.6rem] border border-white/10 bg-blue p-8 sm:p-11">
-          <div className="dot-field absolute inset-0 opacity-50" aria-hidden />
-          <RelayRings className="absolute -top-[420px] -right-[300px] h-[1200px] w-[1200px]" />
+        <div className="relative overflow-hidden rounded-[1.6rem] border border-white/10 p-8 sm:p-11">
+          <Landscape variant="day" className="absolute inset-0 h-full w-full" />
+          <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-navy/60 via-navy/10 to-transparent" aria-hidden />
           <div className="relative flex min-h-[340px] flex-col justify-between gap-10">
             <Wordmark />
             <div className="flex flex-wrap items-end justify-between gap-8">
