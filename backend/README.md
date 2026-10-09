@@ -15,6 +15,8 @@ npm run dev               # http://localhost:4000, seeds demo data on first run
 
 With no keys at all, it runs fully on mocks (`LLM_PROVIDER=mock`, `DECISION_PROVIDER=mock`) and without Telegram; the web inbox still works.
 
+**Demo day, one command:** `npm run demo`. It starts local Laya and the backend if they aren't running, waits for both, does a real AI round trip, and prints a ready/not-ready table for llm, laya, stt and telegram. Ctrl+C stops what it started. Add `--scenarios` to also run the 4 scenarios. The frontend is started separately (`cd ../frontend && npm run dev`).
+
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | Server with reload (API + scheduler every 2 s + Telegram bot if a token is set) |

@@ -12,7 +12,8 @@
     "scenarios": "tsx scripts/scenarios.ts",
     "laya:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-laya.ps1",
     "laya": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-laya.ps1",
-    "laya:check": "tsx scripts/laya-check.ts"
+    "laya:check": "tsx scripts/laya-check.ts",
+    "demo": "tsx scripts/demo.ts"
   },
   "engines": {
     "node": ">=20"

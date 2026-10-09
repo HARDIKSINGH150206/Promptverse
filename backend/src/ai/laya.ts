@@ -143,7 +143,15 @@ async function evaluateLocal(
 // neither can clear one). Choices (diet, intent) come from the LLM, which is far more accurate
 // than the base Laya checkpoints on this domain; Laya's answers are returned for cross-checks.
 async function evaluateHybrid(state: unknown, questions: Record<string, Question>): Promise<Evaluation> {
-  const [laya, llm] = await Promise.allSettled([evaluateLocal(state, questions), evaluateLlm(state, questions)]);
+  // Laya only gets the questions it's useful for: yes/no signals and small choices (diet).
+  // Big choices (7-way reply intent) cost ~3x the CPU time on Laya and come from the LLM anyway.
+  const layaQs = Object.fromEntries(
+    Object.entries(questions).filter(([, q]) => q.type === "boolean" || (q.type === "choice" && Object.keys(q.criteria).length <= 3))
+  );
+  const [laya, llm] = await Promise.allSettled([
+    Object.keys(layaQs).length ? evaluateLocal(state, layaQs) : Promise.reject(new Error("no Laya questions")),
+    evaluateLlm(state, questions),
+  ]);
   const L = laya.status === "fulfilled" ? laya.value.answers : null;
   const M = llm.status === "fulfilled" ? llm.value : null;
   if (!L && !M) throw new DecisionUnavailable("Both local Laya and the LLM are unavailable");
