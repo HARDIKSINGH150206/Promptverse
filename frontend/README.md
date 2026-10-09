@@ -39,10 +39,11 @@ npm run dev                  # http://localhost:3000
 
 ## Design rules
 
-- Visual language follows the Aceternity "Inference" landing page: a deep navy canvas, warm off-white type in large light-weight Inter headlines, hairline borders, pill buttons, small icon eyebrows, mono captions (Geist Mono), and a light product-dashboard frame in the hero. Laptop widths (1280–1536px) are the primary target; every page also works at phone width.
-- Exactly four colours, defined as tokens in `src/app/globals.css`: white `#F9F9F9`, blue `#004E72`, orange `#FF6E42`, navy `#092634`. Tailwind's default palette is switched off. Derived tokens (`sky`, `panel`, `raised`, `line`, `mist`) are colour-mix tints of those four, never new hues.
-- Flat fills only: no gradients and no photos. Depth comes from SVG grid and dot textures and concentric "relay rings".
-- Orange is reserved for the primary call-to-action and attention. Text on orange is navy (white on orange fails contrast).
+- Matched to the Aceternity "Inference" landing page, with values measured from it: ink `#0A0A0A` canvas, warm paper `#F2EFE9` type, accent blue `#0099FF` (deeper fill `#0082FB`), amber `#F0B24A` for attention and active paths, emerald `#10B981` for success. Neutral panels `#121212` / `#1A1A1A`, hairlines `#262626`, and white/zinc light surfaces for the product frame. Tokens live in `src/app/globals.css`, and Tailwind's default palette is switched off.
+- Type: Inter for everything, display at weight 500 with `-0.025em` tracking (as on the reference), Geist Mono for captions and data labels.
+- The primary call-to-action is the light paper pill. Amber is only for attention (risk above threshold, dropouts, the backup takeover), and text on amber is ink.
+- The mountain landscapes (hero, relay panel, CTA) are original SVG artwork drawn from seeded noise, not the reference's photo. The network section's dotted map of India comes from Natural Earth data via `dotted-map`, generated offline into `src/components/landing/indiaDots.ts`.
+- Laptop widths (1280–1536px) are the primary target; every page also works at phone width.
 - Status is never colour-only: every chip, meter and timeline event has an icon and a text label.
 - Honesty: seeded data shows a **Simulated** badge, demo buttons say **Demo control**, AI outputs show source and confidence (Laya / LLM / Mock / Rules), and illustrative landing sections are labelled as examples.
 
