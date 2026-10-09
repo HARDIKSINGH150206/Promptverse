@@ -4,6 +4,8 @@
 > If a change is needed, propose it in `backend/CONTRACT_CHANGES.md` or `frontend/INTEGRATION_NOTES.md`; a human updates this file and tells both sides.
 >
 > **v2 adds:** Bayesian reliability with uncertainty, Thompson-sampling exploration, risk-aware standby backups, free-text reply understanding, and Laya decision-model guardrails at intake.
+>
+> **v2.1 (additive, approved by the team):** `POST /api/transcribe` (multilingual speech-to-text) and the `stt` field on `GET /api/health`. Nothing existing changed.
 
 - Backend base URL (local): `http://localhost:4000`
 - Frontend (local): `http://localhost:3000`
@@ -245,7 +247,9 @@ type AssignmentAction =
 ## 4. Endpoints
 
 ### Health
-`GET /api/health` → `{ "ok": true, "llm": "ready"|"mock"|"missing_key", "laya": "ready"|"mock"|"missing_key"|"unavailable", "telegram": "ready"|"disabled" }`
+`GET /api/health` → `{ "ok": true, "llm": "ready"|"mock"|"missing_key", "laya": "ready"|"mock"|"missing_key"|"unavailable", "telegram": "ready"|"disabled", "stt": "ready"|"missing_key"|"disabled" }`
+
+`stt` (added in v2.1) reports server-side speech-to-text for `POST /api/transcribe`. Clients must tolerate it being absent.
 
 ### Directory
 - `GET /api/restaurants` → `Restaurant[]`
@@ -261,6 +265,14 @@ type AssignmentAction =
 ### Demands
 1. `POST /api/demands/parse` — `multipart/form-data`: `transcript`, `recipient_id` → `200 { "parsed": ParsedDemand }`
 2. `POST /api/demands` — `CreateDemandBody` → `201 Demand` (triggers matching for offers still `matching`)
+
+### Speech-to-text (v2.1, optional)
+`POST /api/transcribe`: `multipart/form-data` with `audio` (required; webm / ogg / wav / mp3 / m4a, under 30 s), `language_code` (optional, default `"unknown"` = auto-detect; e.g. `en-IN`, `hi-IN`, `kn-IN`, `ta-IN`), and `mode` (optional, provider-specific).
+→ `200 { "text": string, "language_code": string | null, "language_probability": number | null, "source": "sarvam" | "groq" }`
+- `400 VALIDATION_ERROR`: no audio, or not an audio file
+- `503 STT_UNAVAILABLE`: every provider failed. The client falls back to the browser Web Speech API or the editable textarea.
+
+Multilingual and code-mixed speech is supported (Sarvam first, Groq Whisper as fallback). The client puts `text` into the editable transcript box and sends it to the existing `/parse` call as `transcript`. Transcription never creates or changes anything by itself.
 
 ### Live board (polled every 2 s)
 `GET /api/board` → `Board`
