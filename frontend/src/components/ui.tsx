@@ -11,24 +11,27 @@ export { cx };
 type Variant = "primary" | "secondary" | "outline" | "quiet" | "onDark";
 type Size = "sm" | "md" | "lg";
 
+// pill buttons with a hairline top highlight, as in the reference
 const VARIANT: Record<Variant, string> = {
-  // orange is the one CTA colour; navy text keeps it readable
-  primary: "bg-orange text-navy hover:bg-orange/90 active:bg-orange/80",
-  secondary: "bg-blue text-white hover:bg-blue/90 active:bg-blue/80",
-  outline: "border border-blue/30 bg-white text-blue hover:border-blue hover:bg-blue/5",
-  quiet: "text-blue hover:bg-blue/10",
-  onDark: "border border-white/25 text-white hover:border-white/60 hover:bg-white/10",
+  // orange is the one call-to-action colour; navy text keeps it readable
+  primary: "bg-orange text-navy shadow-[inset_0_1px_0_rgb(249_249_249/0.35)] hover:bg-orange/90 active:bg-orange/80",
+  // light pill
+  secondary: "bg-white text-navy shadow-[inset_0_-1px_0_rgb(9_38_52/0.12)] hover:bg-white/90 active:bg-white/80",
+  // dark pill
+  onDark: "border border-line bg-raised text-white shadow-[inset_0_1px_0_rgb(249_249_249/0.08)] hover:bg-white/10",
+  outline: "border border-white/15 text-white hover:border-white/35 hover:bg-white/5",
+  quiet: "text-white/70 hover:bg-white/5 hover:text-white",
 };
 const SIZE: Record<Size, string> = {
-  sm: "h-9 gap-1.5 rounded-xl px-3 text-sm",
-  md: "h-11 gap-2 rounded-2xl px-5 text-[15px]",
-  lg: "h-14 gap-2.5 rounded-2xl px-7 text-lg",
+  sm: "h-8 gap-1.5 px-3.5 text-[13px]",
+  md: "h-10 gap-2 px-5 text-sm",
+  lg: "h-12 gap-2.5 px-6 text-[15px]",
 };
 
 export function buttonClass(variant: Variant = "primary", size: Size = "md", extra?: string): string {
   return cx(
-    "inline-flex select-none items-center justify-center font-semibold transition-colors",
-    "disabled:cursor-not-allowed disabled:opacity-45",
+    "inline-flex select-none items-center justify-center rounded-full font-medium whitespace-nowrap transition-colors",
+    "disabled:cursor-not-allowed disabled:opacity-40",
     VARIANT[variant], SIZE[size], extra,
   );
 }
@@ -52,25 +55,33 @@ export function ButtonLink({
 
 export function Card({ className, children, ...rest }: ComponentProps<"div">) {
   return (
-    <div {...rest} className={cx("rounded-card border border-navy/10 bg-white", className)}>
+    <div {...rest} className={cx("rounded-card border border-line bg-panel", className)}>
       {children}
     </div>
   );
 }
 
-export function Eyebrow({ children, className }: { children: ReactNode; className?: string }) {
-  return <p className={cx("text-xs font-bold uppercase tracking-[0.14em] text-blue", className)}>{children}</p>;
+/** Small label with an icon chip, like "Global network" in the reference. */
+export function Eyebrow({ children, icon, className }: { children: ReactNode; icon?: ReactNode; className?: string }) {
+  return (
+    <p className={cx("inline-flex items-center gap-2 text-sm font-medium text-sky", className)}>
+      {icon ? (
+        <span className="flex size-6 items-center justify-center rounded-md bg-sky/15 text-sky [&>svg]:size-3.5">{icon}</span>
+      ) : null}
+      {children}
+    </p>
+  );
 }
 
 export function PageHeader({
-  eyebrow, title, description, actions,
-}: { eyebrow?: ReactNode; title: ReactNode; description?: ReactNode; actions?: ReactNode }) {
+  eyebrow, icon, title, description, actions,
+}: { eyebrow?: ReactNode; icon?: ReactNode; title: ReactNode; description?: ReactNode; actions?: ReactNode }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-4">
+    <div className="flex flex-wrap items-end justify-between gap-6">
       <div className="min-w-0">
-        {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
-        <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-navy sm:text-4xl">{title}</h1>
-        {description ? <p className="mt-2 max-w-2xl text-base text-navy/70">{description}</p> : null}
+        {eyebrow ? <Eyebrow icon={icon}>{eyebrow}</Eyebrow> : null}
+        <h1 className="display mt-4 text-4xl text-white sm:text-5xl">{title}</h1>
+        {description ? <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/60 sm:text-lg">{description}</p> : null}
       </div>
       {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
     </div>
@@ -83,8 +94,8 @@ export function SimulatedBadge({ className, label = "Simulated" }: { className?:
     <span
       title="Seeded demo data, not real-world records"
       className={cx(
-        "inline-flex items-center gap-1 rounded-full border border-dashed border-navy/35 px-2 py-0.5",
-        "text-[11px] font-bold uppercase tracking-wider text-navy/70",
+        "inline-flex items-center gap-1 rounded-full border border-dashed border-white/25 px-2 py-0.5",
+        "text-[11px] font-medium tracking-wide text-white/60",
         className,
       )}
     >
@@ -96,7 +107,7 @@ export function SimulatedBadge({ className, label = "Simulated" }: { className?:
 
 export function Spinner({ label = "Loading" }: { label?: string }) {
   return (
-    <span className="inline-flex items-center gap-2 text-sm text-navy/60" role="status">
+    <span className="inline-flex items-center gap-2 text-sm text-white/55" role="status">
       <LoaderCircle className="size-4 animate-spin" aria-hidden />
       {label}
     </span>
@@ -104,7 +115,7 @@ export function Spinner({ label = "Loading" }: { label?: string }) {
 }
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cx("animate-pulse rounded-2xl bg-navy/[0.06]", className)} aria-hidden />;
+  return <div className={cx("animate-pulse rounded-2xl bg-white/[0.05]", className)} aria-hidden />;
 }
 
 export function LoadingBlock({ label = "Loading", rows = 3 }: { label?: string; rows?: number }) {
@@ -118,10 +129,10 @@ export function LoadingBlock({ label = "Loading", rows = 3 }: { label?: string; 
 
 export function EmptyState({ icon, title, children }: { icon?: ReactNode; title: string; children?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center rounded-card border border-dashed border-navy/20 px-6 py-10 text-center">
-      {icon ? <div className="mb-3 text-blue/70">{icon}</div> : null}
-      <p className="text-base font-semibold text-navy">{title}</p>
-      {children ? <div className="mt-1 max-w-sm text-sm text-navy/65">{children}</div> : null}
+    <div className="flex flex-col items-center rounded-card border border-dashed border-white/15 px-6 py-12 text-center">
+      {icon ? <div className="mb-4 text-sky">{icon}</div> : null}
+      <p className="text-base font-medium text-white">{title}</p>
+      {children ? <div className="mt-1.5 max-w-sm text-sm text-white/55">{children}</div> : null}
     </div>
   );
 }
@@ -131,17 +142,17 @@ export function ErrorState({ error, onRetry, compact }: { error: unknown; onRetr
     <div
       role="alert"
       className={cx(
-        "flex items-start gap-3 rounded-2xl border-2 border-orange bg-white text-navy",
+        "flex items-start gap-3 rounded-2xl border border-orange/60 bg-orange/[0.06] text-white",
         compact ? "p-3 text-sm" : "p-4",
       )}
     >
       <TriangleAlert className="mt-0.5 size-5 shrink-0 text-orange" aria-hidden />
       <div className="min-w-0 flex-1">
-        <p className="font-semibold">Couldn&apos;t load this</p>
-        <p className="text-navy/75">{errorMessage(error)}</p>
+        <p className="font-medium">Couldn&apos;t load this</p>
+        <p className="text-white/65">{errorMessage(error)}</p>
       </div>
       {onRetry ? (
-        <Button variant="outline" size="sm" onClick={onRetry}>
+        <Button variant="onDark" size="sm" onClick={onRetry}>
           <RefreshCw className="size-3.5" aria-hidden />
           Retry
         </Button>
@@ -153,10 +164,10 @@ export function ErrorState({ error, onRetry, compact }: { error: unknown; onRetr
 /** Inline field-level label used in forms. */
 export function FieldLabel({ children, htmlFor, missing }: { children: ReactNode; htmlFor?: string; missing?: boolean }) {
   return (
-    <label htmlFor={htmlFor} className="mb-1.5 flex items-center gap-2 text-sm font-semibold text-navy">
+    <label htmlFor={htmlFor} className="mb-2 flex items-center gap-2 text-sm font-medium text-white/80">
       {children}
       {missing ? (
-        <span className="rounded-full bg-orange px-2 py-px text-[11px] font-bold uppercase tracking-wide text-navy">Missing</span>
+        <span className="rounded-full bg-orange px-2 py-px text-[11px] font-semibold tracking-wide text-navy">Missing</span>
       ) : null}
     </label>
   );
@@ -164,12 +175,13 @@ export function FieldLabel({ children, htmlFor, missing }: { children: ReactNode
 
 /** Input styling without a width, for inputs sized by their flex/grid parent. */
 export const inputBase = cx(
-  "rounded-2xl border border-navy/20 bg-white px-4 py-3 text-navy placeholder:text-navy/40",
-  "outline-none transition-colors focus:border-blue focus:ring-2 focus:ring-blue/20",
+  "rounded-xl border border-line bg-white/[0.03] px-4 py-2.5 text-white placeholder:text-white/30",
+  "outline-none transition-colors focus:border-sky/60 focus:bg-white/[0.05] focus:ring-2 focus:ring-sky/15",
+  "disabled:opacity-50",
 );
 
 export const inputClass = `${inputBase} w-full`;
 
 export function missingRing(missing: boolean): string {
-  return missing ? "border-orange! ring-2 ring-orange/30" : "";
+  return missing ? "border-orange! ring-2 ring-orange/25" : "";
 }

@@ -3,7 +3,7 @@
 import { Timer } from "lucide-react";
 import { useNow } from "@/lib/useNow";
 import { fmtTime } from "@/lib/time";
-import { cx } from "./ui";
+import { cx } from "@/lib/cx";
 
 function parts(msLeft: number): string {
   const s = Math.max(0, Math.floor(msLeft / 1000));
@@ -32,8 +32,7 @@ export function Countdown({
 }) {
   const now = useNow();
   if (!to) return null;
-  const target = Date.parse(to);
-  const left = target - now;
+  const left = Date.parse(to) - now;
   const ready = now > 0;
   const done = ready && left <= 0;
   const urgent = ready && !done && left < urgentMins * 60000;
@@ -41,23 +40,23 @@ export function Countdown({
   return (
     <span
       className={cx(
-        "tabular inline-flex items-baseline gap-1.5 font-semibold",
-        size === "sm" && "text-sm",
-        size === "md" && "text-base",
-        size === "lg" && "text-2xl",
-        size === "xl" && "text-4xl font-extrabold sm:text-5xl",
+        "tabular inline-flex items-baseline gap-1.5",
+        size === "sm" && "text-[13px]",
+        size === "md" && "text-sm",
+        size === "lg" && "text-xl",
+        size === "xl" && "display text-5xl sm:text-6xl",
         className,
       )}
       aria-live="off"
     >
       {size !== "xl" ? (
-        <Timer className={cx("relative top-0.5 shrink-0 self-start", size === "lg" ? "size-5" : "size-4", urgent || done ? "text-orange" : "text-blue")} aria-hidden />
+        <Timer className={cx("relative top-0.5 shrink-0 self-start", size === "lg" ? "size-5" : "size-3.5", urgent || done ? "text-orange" : "text-sky")} aria-hidden />
       ) : null}
-      {label && !done ? <span className="font-medium text-navy/65">{label}</span> : null}
-      <span className={cx(urgent && "rounded-md bg-orange px-1.5 text-navy", done && "text-navy/60")}>
+      {label && !done ? <span className="text-white/55">{label}</span> : null}
+      <span className={cx("font-medium text-white", urgent && "rounded-md bg-orange px-1.5 text-navy", done && "text-white/50")}>
         {!ready ? "—" : done ? doneText : parts(left)}
       </span>
-      {showClock ? <span className="text-sm font-medium text-navy/55">until {fmtTime(to)}</span> : null}
+      {showClock ? <span className="text-white/40">until {fmtTime(to)}</span> : null}
     </span>
   );
 }

@@ -46,21 +46,21 @@ const EVENT: Record<TimelineEventType, { label: string; cat: Cat; icon: LucideIc
 };
 
 const DOT: Record<Cat, string> = {
-  neutral: "bg-white text-navy border-navy/25",
-  info: "bg-blue/10 text-blue border-blue/30",
-  amber: "bg-white text-orange border-orange",
+  neutral: "bg-panel text-white/70 border-white/15",
+  info: "bg-sky/10 text-sky border-sky/30",
+  amber: "bg-panel text-orange border-orange/70",
   red: "bg-orange text-navy border-orange",
-  green: "bg-blue text-white border-blue",
-  grey: "bg-mist text-navy/50 border-dashed border-navy/30",
+  green: "bg-blue text-white border-sky/40",
+  grey: "bg-navy text-white/40 border-dashed border-white/20",
 };
 
 const TAG: Record<Cat, string> = {
-  neutral: "bg-navy/[0.07] text-navy",
-  info: "bg-blue/10 text-blue",
-  amber: "border border-orange text-navy",
+  neutral: "bg-white/[0.06] text-white/75",
+  info: "bg-sky/10 text-sky",
+  amber: "border border-orange/60 text-white",
   red: "bg-orange text-navy",
   green: "bg-blue text-white",
-  grey: "border border-dashed border-navy/30 text-navy/60",
+  grey: "border border-dashed border-white/20 text-white/50",
 };
 
 export function eventSpec(type: TimelineEventType) {
@@ -71,7 +71,7 @@ export function EventTag({ type, className }: { type: TimelineEventType; classNa
   const spec = eventSpec(type);
   const Icon = spec.icon;
   return (
-    <span className={cx("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide whitespace-nowrap", TAG[spec.cat], className)}>
+    <span className={cx("inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] tracking-wide whitespace-nowrap uppercase", TAG[spec.cat], className)}>
       <Icon className="size-3" aria-hidden />
       {spec.label}
     </span>
@@ -81,18 +81,18 @@ export function EventTag({ type, className }: { type: TimelineEventType; classNa
 /** Every event as a sentence with its IST time. The backup takeover is unmistakable. */
 export function Timeline({ events, highlightId }: { events: TimelineEvent[]; highlightId?: string | null }) {
   return (
-    <ol className="relative space-y-1">
+    <ol className="relative">
       {events.map((e, i) => {
         const spec = eventSpec(e.type);
         const Icon = spec.icon;
         const climax = e.type === "standby_promoted";
         const last = i === events.length - 1;
         return (
-          <li key={e.id} className={cx("relative flex gap-3.5 pb-3 animate-enter", climax && "py-1")}>
-            {!last ? <span className="absolute top-9 bottom-0 left-[17px] w-px bg-navy/15" aria-hidden /> : null}
+          <li key={e.id} className={cx("relative flex gap-4 pb-5 animate-enter", climax && "py-1")}>
+            {!last ? <span className="absolute top-9 bottom-0 left-[17px] w-px bg-white/10" aria-hidden /> : null}
             <span
               className={cx(
-                "relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full border-2",
+                "relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full border",
                 DOT[spec.cat],
                 climax && "animate-pulse-ring",
               )}
@@ -103,14 +103,14 @@ export function Timeline({ events, highlightId }: { events: TimelineEvent[]; hig
               className={cx(
                 "min-w-0 flex-1 pt-1",
                 climax && "rounded-2xl bg-orange p-4 pt-3 text-navy",
-                highlightId === e.id && !climax && "rounded-xl bg-blue/5 px-2",
+                highlightId === e.id && !climax && "rounded-xl bg-white/[0.04] px-2",
               )}
             >
               <div className="flex flex-wrap items-center gap-2">
-                <span className="tabular text-xs font-semibold text-navy/55">{fmtTime(e.at)}</span>
-                <EventTag type={e.type} className={climax ? "bg-navy text-white" : undefined} />
+                <span className={cx("tabular font-mono text-[11px]", climax ? "text-navy/70" : "text-white/40")}>{fmtTime(e.at)}</span>
+                <EventTag type={e.type} className={climax ? "bg-navy! text-white!" : undefined} />
               </div>
-              <p className={cx("mt-1 text-navy", climax ? "text-lg font-bold" : "text-[15px]")}>{e.message}</p>
+              <p className={cx("mt-1.5 leading-relaxed", climax ? "text-lg font-semibold text-navy" : "text-[15px] text-white/80")}>{e.message}</p>
             </div>
           </li>
         );

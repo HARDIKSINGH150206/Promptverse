@@ -13,15 +13,16 @@ import { ParsedOfferForm, draftFromParsed, validateOffer, type OfferDraft } from
 import { PhotoInput } from "@/components/PhotoInput";
 import { useToast } from "@/components/providers";
 import { VoiceInput } from "@/components/VoiceInput";
-import { Button, ErrorState, PageHeader, Skeleton, cx } from "@/components/ui";
+import { IntakeLayout } from "@/components/IntakeLayout";
+import { Button, ErrorState, Skeleton, cx } from "@/components/ui";
 
 interface ParseResult { parsed: ParsedOffer; photo_url: string | null; transcript: string }
 
 function Step({ n, title, children, done }: { n: number; title: string; children: React.ReactNode; done?: boolean }) {
   return (
     <section className="animate-enter">
-      <h2 className="mb-3 flex items-center gap-2.5 text-lg font-bold text-navy">
-        <span className={cx("tabular flex size-7 items-center justify-center rounded-full text-sm", done ? "bg-blue text-white" : "bg-navy text-white")}>
+      <h2 className="mb-3 flex items-center gap-2.5 text-lg font-medium text-white">
+        <span className={cx("tabular flex size-7 items-center justify-center rounded-full text-sm", done ? "bg-blue text-white" : "bg-raised text-white")}>
           {done ? <Check className="size-4" aria-hidden /> : n}
         </span>
         {title}
@@ -113,14 +114,15 @@ export default function RestaurantPage() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
-      <PageHeader
-        eyebrow="Restaurant"
-        title="What's left today?"
-        description="Say it the way you'd tell a friend. We'll turn it into an offer, double-check diet and safety, then find a shelter that needs it."
-      />
-
-      <div className="mt-8 space-y-8">
+    <IntakeLayout
+      eyebrow="Restaurant"
+      icon={<Store />}
+      title="What's left today?"
+      description="Say it the way you'd tell a friend. We'll turn it into an offer, double-check diet and safety, then find a shelter that needs it."
+      steps={["Pick your restaurant", "Speak or type what's left", "We double-check diet and safety", "Only homes that need it are offered"]}
+      note="The AI suggests; you confirm every field. Diet and the safety checklist are always asked before anything is sent."
+    >
+      <div className="space-y-10">
         <Step n={1} title="Your restaurant" done={!!selectedId}>
           {restaurants.error && !restaurants.data ? (
             <ErrorState error={restaurants.error} onRetry={restaurants.refresh} />
@@ -140,20 +142,20 @@ export default function RestaurantPage() {
                       onClick={() => setRestaurantId(r.id)}
                       className={cx(
                         "flex items-center gap-3 rounded-2xl border-2 p-4 text-left transition-colors",
-                        on ? "border-blue bg-blue text-white" : "border-navy/10 bg-white text-navy hover:border-blue",
+                        on ? "border-sky/60 bg-blue text-white" : "border-line bg-white/[0.03] text-white hover:border-sky/60",
                       )}
                     >
-                      <Store className={cx("size-6 shrink-0", on ? "text-white" : "text-blue")} aria-hidden />
+                      <Store className={cx("size-6 shrink-0", on ? "text-white" : "text-sky")} aria-hidden />
                       <span>
-                        <span className="block font-bold">{r.name}</span>
-                        <span className={cx("block text-sm", on ? "text-white/75" : "text-navy/60")}>{r.area}</span>
+                        <span className="block font-medium">{r.name}</span>
+                        <span className={cx("block text-sm", on ? "text-white/75" : "text-white/65")}>{r.area}</span>
                       </span>
                     </button>
                   );
                 })}
               </div>
               {selectedId ? (
-                <Link href={`/impact/${selectedId}`} className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-blue hover:underline">
+                <Link href={`/impact/${selectedId}`} className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-sky hover:underline">
                   <ChartNoAxesColumn className="size-4" aria-hidden /> See this restaurant&apos;s impact
                 </Link>
               ) : null}
@@ -181,7 +183,7 @@ export default function RestaurantPage() {
           >
             {parsing ? "Understanding…" : <><Sparkles className="size-5" aria-hidden /> Understand my message</>}
           </Button>
-          {!selectedId ? <p className="mt-2 text-center text-sm text-navy/60">Choose your restaurant above first.</p> : null}
+          {!selectedId ? <p className="mt-2 text-center text-sm text-white/65">Choose your restaurant above first.</p> : null}
         </Step>
 
         {result && draft ? (
@@ -203,7 +205,7 @@ export default function RestaurantPage() {
               />
 
               {showErrors && problems.length ? (
-                <ul className="mt-5 space-y-1 rounded-2xl border-2 border-orange bg-white p-4 text-[15px] text-navy" role="alert">
+                <ul className="mt-5 space-y-1 rounded-2xl border border-orange/70 bg-orange/[0.06] p-4 text-[15px] text-white" role="alert">
                   {problems.map((p) => (
                     <li key={p.message} className="flex gap-2">
                       <span className="mt-2 size-1.5 shrink-0 rounded-full bg-orange" aria-hidden />
@@ -216,13 +218,13 @@ export default function RestaurantPage() {
               <Button size="lg" className="mt-5 w-full" busy={submitting} onClick={() => void submit()}>
                 {submitting ? "Sending…" : <><Send className="size-5" aria-hidden /> Send to recipients</>}
               </Button>
-              <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-sm text-navy/60">
+              <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-sm text-white/65">
                 Only shelters that already need this food will be offered it. <ArrowRight className="size-3.5" aria-hidden /> You&apos;ll see each step live.
               </p>
             </Step>
           </div>
         ) : null}
       </div>
-    </main>
+    </IntakeLayout>
   );
 }

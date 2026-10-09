@@ -169,7 +169,7 @@ export function VoiceInput({
   return (
     <div>
       {engine !== "none" ? (
-        <div className="flex flex-col items-center gap-4 rounded-card bg-navy px-5 py-6 text-white">
+        <div className="flex flex-col items-center gap-4 rounded-card bg-raised px-5 py-6 text-white">
           <button
             type="button"
             onClick={toggle}
@@ -209,15 +209,15 @@ export function VoiceInput({
           </p>
         </div>
       ) : (
-        <p className="rounded-2xl bg-navy/[0.05] px-4 py-3 text-sm text-navy/70">
+        <p className="rounded-2xl bg-white/[0.03] px-4 py-3 text-sm text-white/75">
           Voice input isn&apos;t available in this browser. Type your message below (Chrome or Edge support voice).
         </p>
       )}
 
-      {error ? <p className="mt-3 rounded-xl border border-orange bg-white px-3 py-2 text-sm text-navy" role="alert">{error}</p> : null}
+      {error ? <p className="mt-3 rounded-xl border border-orange/70 bg-orange/[0.06] px-3 py-2 text-sm text-white" role="alert">{error}</p> : null}
 
-      <label htmlFor={id} className="mt-4 mb-1.5 block text-sm font-semibold text-navy">
-        {label} <span className="font-normal text-navy/55">(edit freely)</span>
+      <label htmlFor={id} className="mt-4 mb-1.5 block text-sm font-semibold text-white">
+        {label} <span className="font-normal text-white/60">(edit freely)</span>
       </label>
       <textarea
         id={id}

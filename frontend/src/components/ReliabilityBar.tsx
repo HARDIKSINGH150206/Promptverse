@@ -7,42 +7,42 @@ import { cx } from "@/lib/cx";
  * 90% credible interval. A new recipient's wide band must look visibly different from a proven one's.
  */
 export function ReliabilityBar({
-  recipient, compact = false, showExplanation = false, className,
-}: { recipient: Recipient; compact?: boolean; showExplanation?: boolean; className?: string }) {
+  recipient, compact = false, showExplanation = false, light = false, className,
+}: { recipient: Recipient; compact?: boolean; showExplanation?: boolean; light?: boolean; className?: string }) {
   const r = recipient.reliability;
   const [lo, hi] = r.interval_90;
-  const done = recipient.stats.completed;
-  const label = r.observations === 0 ? "No pickups yet" : `${done} of ${r.observations} pickups`;
+  const label = r.observations === 0 ? "No pickups yet" : `${recipient.stats.completed} of ${r.observations} pickups`;
   const desc = `Reliability ${pct(r.p_complete)}, likely between ${pct(lo)} and ${pct(hi)}. ${label}.`;
 
   return (
     <div className={className}>
       <div className="flex items-baseline justify-between gap-3">
-        <span className="tabular text-sm font-bold text-navy">
+        <span className={cx("tabular text-sm font-medium", light ? "text-navy" : "text-white")}>
           {pct(r.p_complete)}
-          <span className="ml-1.5 font-medium text-navy/60">likely {pct(lo)}–{pct(hi)}</span>
+          <span className={cx("ml-1.5 font-normal", light ? "text-navy/55" : "text-white/45")}>likely {pct(lo)}–{pct(hi)}</span>
         </span>
-        <span className="text-xs font-semibold text-navy/60">{label}</span>
+        <span className={cx("text-xs", light ? "text-navy/55" : "text-white/45")}>{label}</span>
       </div>
       <div
         role="img"
         aria-label={desc}
         title={desc}
-        className={cx("relative mt-1.5 w-full rounded-full bg-navy/[0.08]", compact ? "h-2.5" : "h-3.5")}
+        className={cx("relative mt-2 w-full rounded-full", light ? "bg-navy/[0.08]" : "bg-white/[0.07]", compact ? "h-1.5" : "h-2")}
       >
         <div
-          className="absolute inset-y-0 rounded-full bg-blue/30"
+          className={cx("absolute inset-y-0 rounded-full", light ? "bg-blue/30" : "bg-sky/30")}
           style={{ left: `${lo * 100}%`, width: `${Math.max(1, (hi - lo) * 100)}%` }}
         />
         <div
           className={cx(
-            "absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-blue",
-            compact ? "size-3.5" : "size-4.5",
+            "absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2",
+            light ? "border-mist bg-blue" : "border-navy bg-sky",
+            compact ? "size-3" : "size-3.5",
           )}
           style={{ left: `${r.p_complete * 100}%` }}
         />
       </div>
-      {showExplanation ? <p className="mt-2 text-sm text-navy/70">{r.explanation}</p> : null}
+      {showExplanation ? <p className="mt-2 text-sm text-white/60">{r.explanation}</p> : null}
     </div>
   );
 }

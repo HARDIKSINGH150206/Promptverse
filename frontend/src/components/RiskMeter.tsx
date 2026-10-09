@@ -15,14 +15,14 @@ export function RiskMeter({
   return (
     <div className={className}>
       <div className="flex items-baseline justify-between gap-2">
-        <span className={cx("inline-flex items-center gap-1.5 font-semibold text-navy", compact ? "text-xs" : "text-sm")}>
-          <Gauge className={cx("size-3.5", above ? "text-orange" : "text-blue")} aria-hidden />
+        <span className={cx("inline-flex items-center gap-1.5 font-medium text-white/85", compact ? "text-xs" : "text-sm")}>
+          <Gauge className={cx("size-3.5", above ? "text-orange" : "text-sky")} aria-hidden />
           {label}
-          <span className={cx("tabular rounded-md px-1.5", above ? "bg-orange text-navy" : "text-blue")}>
+          <span className={cx("tabular rounded-md px-1.5", above ? "bg-orange text-navy" : "text-sky")}>
             {pFail === null ? "—" : pct(p)}
           </span>
         </span>
-        <span className={cx("font-semibold", compact ? "text-[11px]" : "text-xs", above ? "text-navy" : "text-navy/55")}>
+        <span className={cx(compact ? "text-[11px]" : "text-xs", above ? "text-white" : "text-white/45")}>
           {pFail === null ? "Not checked yet" : above ? "Above threshold: backup" : "Below threshold"}
         </span>
       </div>
@@ -30,20 +30,16 @@ export function RiskMeter({
         role="img"
         aria-label={desc}
         title={desc}
-        className={cx("relative mt-1.5 w-full overflow-visible rounded-full bg-navy/[0.08]", compact ? "h-2" : "h-3")}
+        className={cx("relative mt-2 w-full rounded-full bg-white/[0.07]", compact ? "h-1.5" : "h-2")}
       >
         <div
-          className={cx("absolute inset-y-0 left-0 rounded-full transition-[width] duration-700", above ? "bg-orange" : "bg-blue")}
+          className={cx("absolute inset-y-0 left-0 rounded-full transition-[width] duration-700", above ? "bg-orange" : "bg-sky")}
           style={{ width: `${Math.min(100, p * 100)}%` }}
         />
-        <div
-          className="absolute -top-1 -bottom-1 w-0.5 rounded bg-navy"
-          style={{ left: `${threshold * 100}%` }}
-          aria-hidden
-        />
+        <div className="absolute -top-1 -bottom-1 w-px bg-white" style={{ left: `${threshold * 100}%` }} aria-hidden />
       </div>
       {!compact ? (
-        <div className="relative mt-1 h-4 text-[11px] font-semibold text-navy/55">
+        <div className="relative mt-1.5 h-4 font-mono text-[10px] tracking-wide text-white/40 uppercase">
           <span className="absolute -translate-x-1/2 whitespace-nowrap" style={{ left: `${threshold * 100}%` }}>
             {pct(threshold)} threshold
           </span>

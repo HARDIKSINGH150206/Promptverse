@@ -47,8 +47,8 @@ export function ReplyBox({
           void send();
         }}
       >
-        <label htmlFor={inputId} className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-navy">
-          <MessageSquareText className="size-4 text-blue" aria-hidden />
+        <label htmlFor={inputId} className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-white">
+          <MessageSquareText className="size-4 text-sky" aria-hidden />
           Reply in your own words
         </label>
         <div className="flex gap-2">

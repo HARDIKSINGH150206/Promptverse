@@ -39,17 +39,18 @@ npm run dev                  # http://localhost:3000
 
 ## Design rules
 
-- Exactly four colours, defined as tokens in `src/app/globals.css`: white `#F9F9F9`, blue `#004E72`, orange `#FF6E42`, navy `#092634`. Tailwind's default palette is switched off; tints are opacity variants of these four.
-- Orange is reserved for primary actions and attention. Text on orange is navy (white on orange fails contrast).
-- Flat fills, no gradients, rounded corners (16–24px). Icons come from `lucide-react`; no emojis.
+- Visual language follows the Aceternity "Inference" landing page: a deep navy canvas, warm off-white type in large light-weight Inter headlines, hairline borders, pill buttons, small icon eyebrows, mono captions (Geist Mono), and a light product-dashboard frame in the hero. Laptop widths (1280–1536px) are the primary target; every page also works at phone width.
+- Exactly four colours, defined as tokens in `src/app/globals.css`: white `#F9F9F9`, blue `#004E72`, orange `#FF6E42`, navy `#092634`. Tailwind's default palette is switched off. Derived tokens (`sky`, `panel`, `raised`, `line`, `mist`) are colour-mix tints of those four, never new hues.
+- Flat fills only: no gradients and no photos. Depth comes from SVG grid and dot textures and concentric "relay rings".
+- Orange is reserved for the primary call-to-action and attention. Text on orange is navy (white on orange fails contrast).
 - Status is never colour-only: every chip, meter and timeline event has an icon and a text label.
-- Honesty: seeded data shows a **Simulated** badge, demo buttons say **Demo control**, and AI outputs show source and confidence (Laya / LLM / Mock / Rules).
+- Honesty: seeded data shows a **Simulated** badge, demo buttons say **Demo control**, AI outputs show source and confidence (Laya / LLM / Mock / Rules), and illustrative landing sections are labelled as examples.
 
 ## Screens
 
 | Route | What |
 | --- | --- |
-| `/` | Hub: live headline numbers, three entry tiles, where the AI is (and isn't) |
+| `/` | Landing: hero with a live dashboard frame, the relay explained, an offer's path, the homes map, voice demo, homes ranked by reliability, the headline metric |
 | `/restaurant` | Voice offer intake → parsed form → Laya guardrail (diet question) → safety checklist → send |
 | `/recipient` | Pick home (reliability bar), Telegram link / web inbox, voice demand intake |
 | `/board` | Live Board for the projector: headline metric, offers with risk, recipients ranked by reliability, demand board |

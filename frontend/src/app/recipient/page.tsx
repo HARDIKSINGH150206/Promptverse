@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, CircleCheck, ExternalLink, Inbox, MonitorPlay, Send, Sparkles } from "lucide-react";
+import { ArrowRight, CircleCheck, Users, ExternalLink, Inbox, MonitorPlay, Send, Sparkles } from "lucide-react";
 import { TELEGRAM_BOT_USERNAME, api } from "@/lib/api/client";
 import { errorMessage, type Demand, type ParsedDemand, type Recipient } from "@/lib/api/types";
 import { fmtTime, istInputToIso } from "@/lib/time";
@@ -14,7 +14,8 @@ import {
 import { useHealth, useToast } from "@/components/providers";
 import { ReliabilityBar } from "@/components/ReliabilityBar";
 import { VoiceInput } from "@/components/VoiceInput";
-import { Button, ButtonLink, Card, ErrorState, PageHeader, SimulatedBadge, Skeleton, cx } from "@/components/ui";
+import { IntakeLayout } from "@/components/IntakeLayout";
+import { Button, ButtonLink, Card, ErrorState, SimulatedBadge, Skeleton, cx } from "@/components/ui";
 
 const TYPE_LABEL: Record<Recipient["type"], string> = {
   shelter: "Shelter", orphanage: "Orphanage", old_age_home: "Elders' home", ngo: "NGO",
@@ -26,20 +27,20 @@ function TelegramPanel({ recipient }: { recipient: Recipient }) {
   return (
     <Card className="p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-base font-bold text-navy">Get offers on Telegram</h3>
+        <h3 className="text-base font-medium text-white">Get offers on Telegram</h3>
         {recipient.telegram_linked ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-blue px-2.5 py-1 text-xs font-bold text-white">
+          <span className="inline-flex items-center gap-1 rounded-full bg-blue px-2.5 py-1 text-xs font-medium text-white">
             <CircleCheck className="size-3.5" aria-hidden /> Linked
           </span>
         ) : null}
       </div>
       {TELEGRAM_BOT_USERNAME && enabled ? (
-        <p className="mt-2 text-sm text-navy/70">
+        <p className="mt-2 text-sm text-white/75">
           Accept, reconfirm and reply in your own words from your phone.
           {recipient.telegram_linked ? " This home is already linked." : ""}
         </p>
       ) : (
-        <p className="mt-2 text-sm text-navy/70">
+        <p className="mt-2 text-sm text-white/75">
           Telegram isn&apos;t switched on for this server right now. The web inbox does everything Telegram does.
         </p>
       )}
@@ -62,8 +63,8 @@ function TelegramPanel({ recipient }: { recipient: Recipient }) {
         </ButtonLink>
       </div>
       {TELEGRAM_BOT_USERNAME && enabled && !recipient.telegram_linked ? (
-        <p className="mt-3 text-xs text-navy/55">
-          Or send <code className="rounded bg-navy/[0.06] px-1.5 py-0.5 font-semibold">/start {recipient.link_code}</code> to @{TELEGRAM_BOT_USERNAME}.
+        <p className="mt-3 text-xs text-white/60">
+          Or send <code className="rounded bg-white/[0.06] px-1.5 py-0.5 font-semibold">/start {recipient.link_code}</code> to @{TELEGRAM_BOT_USERNAME}.
         </p>
       ) : null}
     </Card>
@@ -142,16 +143,18 @@ export default function RecipientPage() {
   const sorted = [...list].sort((a, b) => b.reliability.total - a.reliability.total);
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10">
-      <PageHeader
-        eyebrow="Recipient"
-        title="What do you need today?"
-        description="Tell us how many people you're feeding and by when. Food is only offered to homes that have said what they need."
-      />
+    <IntakeLayout
+      eyebrow="Recipient"
+      icon={<Users />}
+      title="What do you need today?"
+      description="Tell us how many people you're feeding and by when. Food is only offered to homes that have said what they need."
+      steps={["Pick your home", "Link Telegram, or use the web inbox", "Say what you need today", "Matching food is offered to you"]}
+      note="Your reliability is a Bayesian estimate from past pickups, shown with its uncertainty. New homes get a fair chance when time allows."
+    >
 
-      <section className="mt-8">
+      <section>
         <div className="mb-3 flex items-center justify-between gap-2">
-          <h2 className="text-lg font-bold text-navy">Who are you?</h2>
+          <h2 className="text-lg font-medium text-white">Who are you?</h2>
           {list.some((r) => r.reliability.is_simulated_history) ? <SimulatedBadge label="Simulated history" /> : null}
         </div>
         {recipients.error && !recipients.data ? (
@@ -173,16 +176,16 @@ export default function RecipientPage() {
                     setPosted(null);
                   }}
                   className={cx(
-                    "block w-full rounded-2xl border-2 bg-white p-4 text-left transition-colors",
-                    on ? "border-blue ring-4 ring-blue/15" : "border-navy/10 hover:border-blue/60",
+                    "block w-full rounded-2xl border bg-panel p-4 text-left transition-colors",
+                    on ? "border-sky/60 ring-4 ring-sky/15" : "border-line hover:border-sky/60",
                   )}
                 >
                   <span className="mb-2 flex items-center justify-between gap-2">
                     <span>
-                      <span className="block font-bold text-navy">{r.name}</span>
-                      <span className="block text-sm text-navy/60">{TYPE_LABEL[r.type]} · {r.area}</span>
+                      <span className="block font-medium text-white">{r.name}</span>
+                      <span className="block text-sm text-white/65">{TYPE_LABEL[r.type]} · {r.area}</span>
                     </span>
-                    {r.telegram_linked ? <span className="text-xs font-semibold text-blue">Telegram linked</span> : null}
+                    {r.telegram_linked ? <span className="text-xs font-semibold text-sky">Telegram linked</span> : null}
                   </span>
                   <ReliabilityBar recipient={r} compact />
                 </button>
@@ -190,7 +193,7 @@ export default function RecipientPage() {
             })}
           </div>
         )}
-        {selected ? <p className="mt-3 rounded-2xl bg-navy/[0.04] px-4 py-3 text-sm text-navy/75">{selected.reliability.explanation}</p> : null}
+        {selected ? <p className="mt-3 rounded-2xl bg-white/[0.03] px-4 py-3 text-sm text-white/80">{selected.reliability.explanation}</p> : null}
       </section>
 
       {selected ? (
@@ -198,12 +201,12 @@ export default function RecipientPage() {
           <TelegramPanel recipient={selected} />
 
           {posted ? (
-            <Card className="animate-pop border-2 border-blue! p-6">
-              <p className="flex items-center gap-2 text-lg font-bold text-navy">
-                <CircleCheck className="size-6 text-blue" aria-hidden />
+            <Card className="animate-pop border-2 border-sky/60! p-6">
+              <p className="flex items-center gap-2 text-lg font-medium text-white">
+                <CircleCheck className="size-6 text-sky" aria-hidden />
                 Posted: {posted.people_count} {posted.diet === "veg" ? "veg" : posted.diet === "nonveg" ? "non-veg" : ""} meals needed by {fmtTime(posted.needed_by)}
               </p>
-              <p className="mt-1 text-navy/70">Matching food will be offered to you right away. Keep your inbox open.</p>
+              <p className="mt-1 text-white/75">Matching food will be offered to you right away. Keep your inbox open.</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <ButtonLink href="/board" variant="secondary"><MonitorPlay className="size-4" aria-hidden /> See it on the Live Board</ButtonLink>
                 <ButtonLink href={`/collector/${selected.id}`} variant="outline"><Inbox className="size-4" aria-hidden /> Open my inbox</ButtonLink>
@@ -212,7 +215,7 @@ export default function RecipientPage() {
           ) : null}
 
           <section>
-            <h2 className="mb-3 text-lg font-bold text-navy">Say what you need</h2>
+            <h2 className="mb-3 text-lg font-medium text-white">Say what you need</h2>
             <VoiceInput
               id="demand-transcript"
               value={transcript}
@@ -247,7 +250,7 @@ export default function RecipientPage() {
                 problems={problems.map((p) => p.field)}
               />
               {showErrors && problems.length ? (
-                <ul className="mt-5 space-y-1 rounded-2xl border-2 border-orange bg-white p-4 text-[15px] text-navy" role="alert">
+                <ul className="mt-5 space-y-1 rounded-2xl border border-orange/70 bg-orange/[0.06] p-4 text-[15px] text-white" role="alert">
                   {problems.map((p) => (
                     <li key={p.message} className="flex gap-2">
                       <span className="mt-2 size-1.5 shrink-0 rounded-full bg-orange" aria-hidden />
@@ -263,12 +266,12 @@ export default function RecipientPage() {
           ) : null}
         </div>
       ) : recipients.data ? (
-        <p className="mt-6 text-center text-sm text-navy/60">Pick your home above to continue.</p>
+        <p className="mt-6 text-center text-sm text-white/65">Pick your home above to continue.</p>
       ) : null}
 
-      <p className="mt-10 text-center text-sm text-navy/55">
-        Already have an offer? <Link href="/board" className="font-semibold text-blue hover:underline">Find it on the Live Board</Link>
+      <p className="mt-10 text-center text-sm text-white/60">
+        Already have an offer? <Link href="/board" className="font-semibold text-sky hover:underline">Find it on the Live Board</Link>
       </p>
-    </main>
+    </IntakeLayout>
   );
 }

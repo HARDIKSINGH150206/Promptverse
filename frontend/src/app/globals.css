@@ -1,9 +1,15 @@
 @import "tailwindcss";
 
 /*
-  AnnaRelay palette: exactly four colours. Tailwind's default palette is switched off so nothing else sneaks in.
-  Tints come from opacity modifiers on these four (e.g. bg-blue/10), never from new hues.
-  Contrast: white text on navy/blue; navy text on white; navy text on orange (white on orange is only ~2.6:1).
+  AnnaRelay design system, after the Aceternity "Inference" landing page:
+  a deep canvas, warm off-white type, hairline borders, pill buttons, big light headlines.
+
+  Exactly four colours. Tailwind's default palette is switched off; every other token below is a
+  tint of these four (colour-mix / opacity), never a new hue. Flat fills only, no gradients.
+    white  #F9F9F9  type on dark, light surfaces
+    blue   #004E72  brand, success fills, accents (as the lighter "sky" tint on dark)
+    orange #FF6E42  primary CTA and attention, used sparingly; navy text on it
+    navy   #092634  the canvas
 */
 :root {
   --color-white: #f9f9f9;
@@ -18,42 +24,62 @@
   --color-blue: #004e72;
   --color-orange: #ff6e42;
   --color-navy: #092634;
-  /* page background: white with a breath of the brand blue */
-  --color-mist: color-mix(in srgb, #004e72 5%, #f9f9f9);
+
+  /* tints of the four */
+  --color-sky: color-mix(in srgb, #004e72 38%, #f9f9f9);      /* blue, readable on navy */
+  --color-panel: color-mix(in srgb, #f9f9f9 3.5%, #092634);   /* card on canvas */
+  --color-raised: color-mix(in srgb, #f9f9f9 7%, #092634);    /* hover / inner surface */
+  --color-line: color-mix(in srgb, #f9f9f9 10%, #092634);     /* hairline border */
+  --color-mist: color-mix(in srgb, #004e72 6%, #f9f9f9);      /* light frame background */
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
   --radius-card: 1.25rem;
 
-  --animate-enter: enter 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-enter: enter 500ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   --animate-pop: pop 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  --animate-pulse-ring: pulse-ring 1.6s ease-out infinite;
+  --animate-pulse-ring: pulse-ring 1.8s ease-out infinite;
+  --animate-dash: dash 1.2s linear infinite;
+  --animate-blink: blink 2.4s ease-in-out infinite;
 
   @keyframes enter {
-    from { opacity: 0; transform: translateY(6px); }
+    from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
   }
   @keyframes pop {
-    0% { opacity: 0; transform: scale(0.96); }
-    60% { opacity: 1; transform: scale(1.01); }
+    0% { opacity: 0; transform: scale(0.97); }
+    60% { opacity: 1; transform: scale(1.005); }
     100% { opacity: 1; transform: scale(1); }
   }
   @keyframes pulse-ring {
     0% { box-shadow: 0 0 0 0 color-mix(in srgb, #ff6e42 55%, transparent); }
-    100% { box-shadow: 0 0 0 14px color-mix(in srgb, #ff6e42 0%, transparent); }
+    100% { box-shadow: 0 0 0 16px color-mix(in srgb, #ff6e42 0%, transparent); }
   }
-}
-
-@theme inline {
-  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  @keyframes dash {
+    to { stroke-dashoffset: -16; }
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 1; }
+  }
 }
 
 html {
   background: var(--color-navy);
+  color-scheme: dark;
 }
 
 body {
-  background: var(--color-mist);
+  background: var(--color-navy);
+  color: var(--color-white);
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-orange);
   color: var(--color-navy);
-  font-feature-settings: "ss01";
 }
 
 /* numbers that tick should not jitter */
@@ -61,8 +87,31 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* large display type, like the reference */
+.display {
+  font-weight: 450;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+}
+
+/* hairline grid texture: an SVG pattern of 1px lines (flat, no gradients) */
+.grid-lines {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='104' height='104'%3E%3Cpath d='M104 0V104M0 104H104' fill='none' stroke='%23F9F9F9' stroke-opacity='0.05'/%3E%3C/svg%3E");
+}
+
+/* dot texture for map-like panels */
+.dot-field {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14'%3E%3Ccircle cx='2' cy='2' r='1' fill='%23F9F9F9' fill-opacity='0.12'/%3E%3C/svg%3E");
+}
+
+/* light dashboard frame keeps its own form styling */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.6;
+}
+
 :focus-visible {
-  outline: 3px solid var(--color-orange);
+  outline: 2px solid var(--color-orange);
   outline-offset: 2px;
 }
 

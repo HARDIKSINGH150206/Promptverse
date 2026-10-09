@@ -8,22 +8,22 @@ import { cx } from "@/lib/cx";
 
 /**
  * Four-colour status language. Never colour-only: every tone has an icon and a text label.
- *   good    solid blue    (collected, fulfilled)
- *   info    blue tint     (accepted, confirmed, on standby)
+ *   good    solid blue     (collected, fulfilled)
+ *   info    sky tint       (accepted, confirmed, on standby)
  *   warn    orange outline (needs attention: reconfirm asked, standby asked)
- *   bad     solid orange  (dropouts: cancelled, no response, expired)
- *   neutral navy tint     (offered, matching)
- *   muted   dashed, faded (declined, released, fallback)
+ *   bad     solid orange   (dropouts: cancelled, no response, expired)
+ *   neutral white tint     (offered, matching)
+ *   muted   dashed, faded  (declined, released, fallback)
  */
 export type Tone = "good" | "info" | "warn" | "bad" | "neutral" | "muted";
 
 export const TONE_CLASS: Record<Tone, string> = {
-  good: "bg-blue text-white border-blue",
-  info: "bg-blue/10 text-blue border-blue/25",
-  warn: "bg-white text-navy border-orange",
+  good: "bg-blue text-white border-sky/40",
+  info: "bg-sky/10 text-sky border-sky/25",
+  warn: "bg-orange/10 text-white border-orange/70",
   bad: "bg-orange text-navy border-orange",
-  neutral: "bg-navy/[0.07] text-navy border-navy/15",
-  muted: "bg-transparent text-navy/60 border-dashed border-navy/30",
+  neutral: "bg-white/[0.06] text-white/85 border-white/12",
+  muted: "bg-transparent text-white/50 border-dashed border-white/20",
 };
 
 type Spec = { label: string; tone: Tone; icon: LucideIcon };
@@ -78,7 +78,7 @@ export function StatusChip(props: Props) {
   return (
     <span
       className={cx(
-        "inline-flex shrink-0 items-center gap-1.5 rounded-full border font-semibold whitespace-nowrap",
+        "inline-flex shrink-0 items-center gap-1.5 rounded-full border font-medium whitespace-nowrap",
         size === "sm" && "px-2 py-0.5 text-xs",
         size === "md" && "px-2.5 py-1 text-[13px]",
         size === "lg" && "px-3.5 py-1.5 text-base",

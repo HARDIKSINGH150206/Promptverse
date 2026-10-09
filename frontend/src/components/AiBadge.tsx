@@ -27,8 +27,8 @@ export function AiBadge({ source, probability, className }: { source: AiSource; 
     <span
       title={TITLE[source]}
       className={cx(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold whitespace-nowrap",
-        isReal ? "bg-navy text-white" : "border border-dashed border-navy/40 text-navy/75",
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[11px] font-medium whitespace-nowrap",
+        isReal ? "border border-sky/30 bg-sky/10 text-sky" : "border border-dashed border-white/25 text-white/65",
         className,
       )}
     >

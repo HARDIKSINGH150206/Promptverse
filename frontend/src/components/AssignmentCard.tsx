@@ -40,13 +40,13 @@ export function AssignmentCard({
   return (
     <article
       className={cx(
-        "flex flex-col rounded-card border bg-white p-5",
-        a.status === "collected" ? "border-2 border-blue" : a.is_standby ? "border-2 border-dashed border-orange" : "border-navy/15",
+        "flex flex-col rounded-card border bg-panel p-5",
+        a.status === "collected" ? "border-2 border-sky/60" : a.is_standby ? "border-2 border-dashed border-orange" : "border-line",
         inactive && "self-start opacity-65",
       )}
     >
       {a.is_standby ? (
-        <p className="mb-2 inline-flex w-fit items-center gap-1.5 rounded-full bg-orange px-2.5 py-1 text-xs font-bold text-navy">
+        <p className="mb-2 inline-flex w-fit items-center gap-1.5 rounded-full bg-orange px-2.5 py-1 text-xs font-medium text-navy">
           <LifeBuoy className="size-3.5" aria-hidden />
           Backup{coversName ? ` for ${coversName}` : ""}
         </p>
@@ -54,9 +54,9 @@ export function AssignmentCard({
 
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="text-lg font-extrabold tracking-tight text-navy">{a.recipient_name}</h3>
-          <p className="tabular mt-0.5 flex flex-wrap items-center gap-x-3 text-sm text-navy/65">
-            <span className="font-semibold text-navy">{a.meals} meals</span>
+          <h3 className="text-lg font-semibold tracking-tight text-white">{a.recipient_name}</h3>
+          <p className="tabular mt-0.5 flex flex-wrap items-center gap-x-3 text-sm text-white/70">
+            <span className="font-semibold text-white">{a.meals} meals</span>
             <span className="inline-flex items-center gap-1"><MapPin className="size-3.5" aria-hidden />{a.distance_km} km</span>
             <span>reliability {pct(a.reliability_at_assignment)}</span>
           </p>
@@ -66,9 +66,9 @@ export function AssignmentCard({
 
       <div className="mt-3 space-y-1">
         {deadline ? <Countdown to={deadline.to} label={deadline.label} urgentMins={0.5} doneText="Deadline passed" /> : null}
-        {active && a.eta_promised ? <p className="text-sm text-navy/75">Promised arrival around <b className="text-navy">{fmtTime(a.eta_promised)}</b></p> : null}
+        {active && a.eta_promised ? <p className="text-sm text-white/80">Promised arrival around <b className="text-white">{fmtTime(a.eta_promised)}</b></p> : null}
         {a.status === "collected" && a.collected_at ? (
-          <p className="flex items-center gap-1.5 text-sm font-semibold text-blue"><PackageCheck className="size-4" aria-hidden /> Collected at {fmtTime(a.collected_at)}</p>
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-sky"><PackageCheck className="size-4" aria-hidden /> Collected at {fmtTime(a.collected_at)}</p>
         ) : null}
       </div>
 
@@ -81,7 +81,7 @@ export function AssignmentCard({
       {a.last_reply ? <UnderstoodCard understood={a.last_reply} compact className="mt-4" /> : null}
 
       <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-4">
-        <Link href={`/collector/${a.recipient_id}`} className="inline-flex items-center gap-1.5 text-sm font-bold text-blue hover:underline">
+        <Link href={`/collector/${a.recipient_id}`} className="inline-flex items-center gap-1.5 text-sm font-medium text-sky hover:underline">
           <Inbox className="size-4" aria-hidden /> Open inbox
         </Link>
         {onSkip && FAST_FORWARDABLE.includes(a.status) ? (

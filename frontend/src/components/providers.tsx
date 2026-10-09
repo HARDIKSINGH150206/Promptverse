@@ -53,7 +53,7 @@ export function Providers({ children }: { children: ReactNode }) {
                 role={t.tone === "error" ? "alert" : "status"}
                 className={cx(
                   "pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-2xl px-4 py-3 text-[15px] animate-enter",
-                  t.tone === "error" ? "border-2 border-orange bg-white text-navy" : "bg-navy text-white",
+                  t.tone === "error" ? "border border-orange/70 bg-panel text-white" : "bg-raised text-white",
                 )}
               >
                 <Icon className={cx("mt-0.5 size-5 shrink-0", t.tone === "error" ? "text-orange" : t.tone === "success" ? "text-orange" : "text-white/80")} aria-hidden />

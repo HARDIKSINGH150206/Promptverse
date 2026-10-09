@@ -70,8 +70,8 @@ export function ParsedDemandForm({
 
       <Card className="p-5">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-lg font-bold text-navy">What we understood</h3>
-          <span className="text-sm text-navy/55">Edit anything that&apos;s off</span>
+          <h3 className="text-lg font-medium text-white">What we understood</h3>
+          <span className="text-sm text-white/60">Edit anything that&apos;s off</span>
         </div>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -111,8 +111,8 @@ export function ParsedDemandForm({
                 aria-checked={draft.diet === v}
                 onClick={() => set("diet", v)}
                 className={cx(
-                  "flex h-14 items-center justify-center gap-2 rounded-2xl border-2 text-[15px] font-bold transition-colors",
-                  draft.diet === v ? "border-blue bg-blue text-white" : "border-navy/15 bg-white text-navy hover:border-blue",
+                  "flex h-14 items-center justify-center gap-2 rounded-2xl border-2 text-[15px] font-medium transition-colors",
+                  draft.diet === v ? "border-sky/60 bg-blue text-white" : "border-line bg-white/[0.03] text-white hover:border-sky/60",
                   flag("diet", !draft.diet) && draft.diet !== v && "border-orange!",
                 )}
               >

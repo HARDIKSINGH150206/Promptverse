@@ -16,8 +16,8 @@ export function ImpactView() {
   const card = poll.data;
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
-      <Link href="/restaurant" className="inline-flex items-center gap-1.5 text-sm font-bold text-blue hover:underline">
+    <main className="mx-auto max-w-3xl px-5 py-12 lg:py-16">
+      <Link href="/restaurant" className="inline-flex items-center gap-1.5 text-sm font-medium text-sky hover:underline">
         <ArrowLeft className="size-4" aria-hidden /> Restaurant
       </Link>
       {!card ? (
@@ -51,7 +51,7 @@ export function ImpactView() {
             <StatTile icon={<Send className="size-4" aria-hidden />} label="Offers made" value={card.offers_made} />
             <StatTile icon={<Recycle className="size-4" aria-hidden />} label="Sent to fallback" value={card.fallback_count} sub="Animal feed or compost partner (simulated)" />
           </div>
-          <p className="mt-6 text-sm text-navy/60">
+          <p className="mt-6 text-sm text-white/65">
             This is a demo metric only. We don&apos;t claim real-world waste-reduction numbers.
           </p>
         </>

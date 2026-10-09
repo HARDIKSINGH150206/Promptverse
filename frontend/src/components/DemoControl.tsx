@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { LoaderCircle } from "lucide-react";
-import { cx } from "./ui";
+import { cx } from "@/lib/cx";
 
 /** Buttons that bend time or state for the demo. Always labelled "Demo control". */
 export function DemoControl({
@@ -23,15 +23,15 @@ export function DemoControl({
       disabled={disabled || busy}
       title={title}
       className={cx(
-        "inline-flex items-center gap-2 rounded-xl border border-dashed border-navy/40 bg-white px-3 py-1.5 text-left",
-        "transition-colors hover:border-navy hover:bg-navy/[0.04] disabled:cursor-not-allowed disabled:opacity-45",
+        "inline-flex items-center gap-2.5 rounded-xl border border-dashed border-white/25 bg-white/[0.02] px-3 py-1.5 text-left",
+        "transition-colors hover:border-white/50 hover:bg-white/[0.05] disabled:cursor-not-allowed disabled:opacity-40",
         className,
       )}
     >
-      <span className="text-blue">{busy ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : icon}</span>
+      <span className="text-sky">{busy ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : icon}</span>
       <span className="flex flex-col leading-tight">
-        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-navy/55">Demo control</span>
-        <span className="text-sm font-semibold text-navy">{children}</span>
+        <span className="font-mono text-[9.5px] tracking-[0.14em] text-white/45 uppercase">Demo control</span>
+        <span className="text-[13px] font-medium text-white">{children}</span>
       </span>
     </button>
   );
