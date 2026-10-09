@@ -47,6 +47,27 @@ function withPhoto<T extends Offer>(o: T): T {
   return { ...o, photo_url: absolutePhoto(o.photo_url) };
 }
 
+// ---- shared with the live stream (src/lib/stream.ts) and live-only pages (judge, call) ----
+
+/** ws:// or wss:// base for the backend's WebSocket endpoints. */
+export const WS_BASE_URL = API_BASE_URL.replace(/^http/, "ws");
+
+/** Same normalisation `board()` applies, for boards that arrive over the stream. */
+export function normalizeBoard(b: Board): Board {
+  setServerTime(b.server_time);
+  return { ...b, offers: b.offers.map(withPhoto) };
+}
+
+/** Same normalisation `getOffer()` applies, for offers that arrive over the stream or a call. */
+export function normalizeOffer(o: OfferDetail): OfferDetail {
+  return withPhoto(o);
+}
+
+/** GET a live-only endpoint (not part of the mockable Api). */
+export function getJson<T>(path: string): Promise<T> {
+  return request<T>(path);
+}
+
 export const live: Api = {
   health: () => request<Health>("/api/health"),
   restaurants: () => request<Restaurant[]>("/api/restaurants"),

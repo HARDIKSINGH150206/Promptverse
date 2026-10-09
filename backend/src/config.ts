@@ -54,6 +54,10 @@ export const config = {
   SARVAM_TTS_MODEL: str("SARVAM_TTS_MODEL", "bulbul:v3"),
   SARVAM_TTS_SPEAKER: str("SARVAM_TTS_SPEAKER", "priya"),
   AGENT_MODEL: str("AGENT_MODEL", ""),
+  // none = no hidden reasoning (fastest; Groq qwen3). gpt-oss models only accept low | medium | high.
+  AGENT_REASONING: str("AGENT_REASONING", "none") as "none" | "low" | "medium" | "high" | "default",
+  SARVAM_TTS_SAMPLE_RATE: num("SARVAM_TTS_SAMPLE_RATE", 16000),
+  SARVAM_SILENCE_MS: num("SARVAM_SILENCE_MS", 400),
   SARVAM_STREAM_MODEL: str("SARVAM_STREAM_MODEL", "saaras:v3-realtime"),
   GROQ_API_KEY: str("GROQ_API_KEY"),
   GROQ_STT_MODEL: str("GROQ_STT_MODEL", "whisper-large-v3-turbo"),

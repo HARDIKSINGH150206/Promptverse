@@ -17,6 +17,10 @@ import { ReliabilityBar } from "@/components/ReliabilityBar";
 import { StatTile } from "@/components/StatTile";
 import { StatusChip } from "@/components/StatusChip";
 import { Card, EmptyState, ErrorState, LoadingBlock, SimulatedBadge, Skeleton, cx } from "@/components/ui";
+import { LiveCallBanner, useLiveCall } from "@/components/LiveCall";
+import { normalizeBoard, normalizeOffer } from "@/lib/api/live";
+import { useStreamEvent, useStreamStatus } from "@/lib/stream";
+import type { Board } from "@/lib/api/types";
 
 const ACTIVE_DEMAND: Demand["status"][] = ["open", "partially_matched", "matched"];
 
@@ -79,8 +83,13 @@ function DemandRow({ d }: { d: Demand }) {
 
 export default function BoardPage() {
   const now = useNow();
-  const board = usePoll(() => api.board(), 2000);
+  const streaming = useStreamStatus() === "live";
+  // the stream pushes changes instantly; polling stays as a slow safety net
+  const board = usePoll(() => api.board(), streaming ? 15000 : 2000);
   const b = board.data;
+  useStreamEvent<{ board: Board }>("hello", (d) => board.setData(normalizeBoard(d.board)));
+  useStreamEvent<{ board: Board }>("board", (d) => board.setData(normalizeBoard(d.board)));
+  const liveCall = useLiveCall();
 
   // OfferDetail (risk + latest event) for live offers and the few most recent ones
   const detailIds = useMemo(() => {
@@ -97,7 +106,13 @@ export default function BoardPage() {
       if (r.status === "fulfilled") out[r.value.id] = r.value;
     });
     return out;
-  }, 2000);
+  }, streaming ? 15000 : 2000);
+  const setDetails = details.setData;
+  const detailsData = details.data;
+  useStreamEvent<{ offer: OfferDetail }>("offer", (d) => {
+    if (!detailIds.includes(d.offer.id)) return;
+    setDetails({ ...(detailsData ?? {}), [d.offer.id]: normalizeOffer(d.offer) });
+  });
   const refreshDetails = details.refresh;
   useEffect(() => {
     if (idsKey) void refreshDetails();
@@ -127,7 +142,7 @@ export default function BoardPage() {
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-orange opacity-60" aria-hidden />
               <span className="relative inline-flex size-2.5 rounded-full bg-orange" aria-hidden />
             </span>
-            Live · updates every 2 s
+            {streaming ? "Live · streaming from the server" : "Live · updates every 2 s"}
           </p>
           <h1 className="display mt-4 text-5xl text-white sm:text-6xl">Live Board</h1>
         </div>
@@ -137,6 +152,8 @@ export default function BoardPage() {
           <ResetControl onDone={() => void board.refresh()} />
         </div>
       </div>
+
+      {liveCall ? <LiveCallBanner call={liveCall} className="mt-6" /> : null}
 
       {/* headline metrics */}
       <section aria-label="Headline metrics" className="mt-6 grid gap-3 lg:grid-cols-[1.15fr_2fr]">

@@ -10,6 +10,7 @@ import { config } from "../config";
 import { intakeGuardrail } from "../ai/guardrail";
 import { SAFETY_RE } from "../ai/mock";
 import { fixFuture, fixPast, SAYS_TOMORROW } from "../ai/parse";
+import { parseSpokenTime, resolveFuture, resolvePast } from "../ai/time";
 import { SarvamRealtime } from "../ai/sarvamRealtime";
 import { sentences, synthesize, ttsLanguage } from "../ai/tts";
 import { getRecipient, getRestaurant, listAssignmentsForRecipient, listRecipientRows, listRestaurants, getOfferRow } from "../db/repo";
@@ -80,6 +81,23 @@ const T = {
     error: (m: string) => `माफ़ कीजिए, सेव नहीं हो पाया: ${m}.`,
   },
 };
+
+// The model reports times as spoken local clock times ("19:00", "2:00"); code picks the day and
+// resolves am/pm: cooked = most recent occurrence, safe-until / needed-by = next occurrence.
+const ISO_RE = /\d{4}-\d{2}-\d{2}T/;
+function spokenPast(v: string | null | undefined): string | null {
+  if (!v) return null;
+  if (ISO_RE.test(v)) return fixPast(v); // tolerate ISO from older prompts
+  const t = parseSpokenTime(v);
+  return t ? resolvePast(t, nowMs()) : null;
+}
+function spokenFuture(v: string | null | undefined, tomorrow: boolean): string | null {
+  if (!v) return null;
+  if (ISO_RE.test(v)) return fixFuture(v, nowMs(), tomorrow);
+  const t = parseSpokenTime(v);
+  if (!t) return null;
+  return resolveFuture(t, tomorrow ? nowMs() + 12 * 3600_000 : nowMs());
+}
 
 function similar(a: string, b: string): number {
   const wa = new Set(a.toLowerCase().match(/\p{L}+/gu) ?? []);
@@ -196,8 +214,8 @@ export class CallSession {
       const audio = await jobs[i];
       if (this.closed) return;
       if (audio) {
-        total += Math.max(0, (Buffer.byteLength(audio, "base64") - 44) / (22050 * 2));
-        this.send({ type: "audio", turn, index: i, format: "wav", sample_rate: 22050, text: parts[i], data: audio });
+        total += Math.max(0, (Buffer.byteLength(audio, "base64") - 44) / (config.SARVAM_TTS_SAMPLE_RATE * 2));
+        this.send({ type: "audio", turn, index: i, format: "wav", sample_rate: config.SARVAM_TTS_SAMPLE_RATE, text: parts[i], data: audio });
       } else {
         this.send({ type: "audio_unavailable", turn, index: i, text: parts[i] }); // client may use speechSynthesis
       }
@@ -341,16 +359,16 @@ export class CallSession {
       if (u.meal_count && u.meal_count > 0) d.meal_count = Math.round(u.meal_count);
       if (!d.meal_count && d.items?.length === 1 && d.items[0].quantity > 0) d.meal_count = d.items[0].quantity;
       if (u.diet === "veg" || u.diet === "nonveg") d.diet = u.diet;
-      const cooked = fixPast(u.cooked_at ?? null);
+      const cooked = spokenPast(u.cooked_at);
       if (cooked) d.cooked_at = cooked;
-      const safe = fixFuture(u.safe_until ?? null, nowMs(), tomorrow);
+      const safe = spokenFuture(u.safe_until, tomorrow);
       if (safe) d.safe_until = safe;
       if (u.pickup_notes?.trim()) d.pickup_notes = u.pickup_notes.trim();
     } else {
       if (u.recipient_id && getRecipient(u.recipient_id)) d.recipient_id = u.recipient_id;
       if (u.people_count && u.people_count > 0) d.people_count = Math.round(u.people_count);
       if (u.diet) d.diet = u.diet;
-      const by = fixFuture(u.needed_by ?? null, nowMs(), tomorrow);
+      const by = spokenFuture(u.needed_by, tomorrow);
       if (by) d.needed_by = by;
       if (u.max_distance_km && u.max_distance_km > 0 && u.max_distance_km <= 50) d.max_distance_km = u.max_distance_km;
       if (u.notes?.trim()) d.notes = u.notes.trim();

@@ -52,14 +52,14 @@ function system(input: BrainInput): string {
     input.role === "restaurant"
       ? `You are AnnaRelay's phone agent taking a call from a RESTAURANT that has leftover cooked food to donate.
 Fields: restaurant_id (pick from DIRECTORY by name), items [{name, quantity, unit}], meal_count (plates/portions),
-diet ("veg" if no meat/fish/egg in any item, "nonveg" otherwise; never "any"), cooked_at (ISO), safe_until (ISO), pickup_notes.`
+diet ("veg" if no meat/fish/egg in any item, "nonveg" otherwise; never "any"), cooked_at (clock time), safe_until (clock time), pickup_notes.`
       : `You are AnnaRelay's phone agent taking a call from a SHELTER / NGO that needs food for its people today.
-Fields: recipient_id (pick from DIRECTORY by name), people_count, diet ("veg" | "nonveg" | "any"), needed_by (ISO),
+Fields: recipient_id (pick from DIRECTORY by name), people_count, diet ("veg" | "nonveg" | "any"), needed_by (clock time),
 max_distance_km (only if stated), notes.`;
   return `${who}
 
-Current time: ${new Date(input.nowMs).toISOString()} (UTC) = ${localNowLabel(input.nowMs)} in ${config.TZ_NAME}.
-Callers speak local time; convert to ISO 8601 UTC ending in "Z". "made at 7" is the most recent 7 o'clock; "safe till 10" is the next 10 o'clock.
+Local time now: ${localNowLabel(input.nowMs)}.
+Times: give cooked_at / safe_until / needed_by as the LOCAL clock time the caller said, as "HH:MM". Use 24-hour form only when the caller made am/pm clear ("7 pm", "raat 10 baje", "tonight at 10" -> "22:00", "morning 8" -> "08:00"); otherwise give the hour exactly as said ("made at 2" -> "2:00"). Never convert time zones and never add dates: the system resolves the day.
 
 Rules:
 - Put in "updates" ONLY what the caller actually said in THIS turn (corrections included). Never guess a field, never invent safe_until or needed_by.
@@ -98,7 +98,7 @@ export async function think(input: BrainInput): Promise<BrainResult> {
       messages: [{ role: "system", content: sys }, { role: "user", content: usr }],
       response_format: { type: "json_object" },
       temperature: 0.3,
-      ...({ reasoning_effort: "low" } as object),
+      ...(config.AGENT_REASONING === "default" ? {} : ({ reasoning_effort: config.AGENT_REASONING } as object)),
     });
     raw = res.choices[0]?.message?.content ?? "";
   } else {

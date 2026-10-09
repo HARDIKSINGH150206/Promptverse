@@ -12,6 +12,13 @@ export function ttsLanguage(lang: string | null | undefined): string {
 export function sentences(text: string): string[] {
   const out: string[] = [];
   for (const s of (text.match(/[^.!?।]+[.!?।]+["')\]]*|[^.!?।]+$/g) ?? [text]).map((x) => x.trim()).filter(Boolean)) {
+    // a short lead-in ("Let me read that back:") is its own clip, so speech starts almost immediately
+    const lead = out.length === 0 ? s.match(/^(.{6,40}?:)\s+(.+)$/) : null;
+    if (lead) {
+      out.push(lead[1]);
+      out.push(...sentences(lead[2]));
+      continue;
+    }
     // long sentences (read-backs) are split at commas so the first audio arrives sooner
     if (s.length <= 110) {
       out.push(s);
@@ -42,7 +49,7 @@ export async function synthesize(text: string, lang: string, codec: "wav" | "mp3
         language_code: ttsLanguage(lang),
         model: config.SARVAM_TTS_MODEL,
         speaker: config.SARVAM_TTS_SPEAKER,
-        speech_sample_rate: 22050,
+        speech_sample_rate: config.SARVAM_TTS_SAMPLE_RATE,
         output_audio_codec: codec,
         pace: 1.1,
       }),

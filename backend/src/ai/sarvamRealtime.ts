@@ -36,6 +36,7 @@ export class SarvamRealtime extends EventEmitter {
       sample_rate: "16000",
       encoding: "linear16",
       stream_type: "balanced",
+      silence_duration_ms: String(config.SARVAM_SILENCE_MS),
     });
     const ws = new WebSocket(`${URL_BASE}?${params}`, { headers: { "api-subscription-key": config.SARVAM_API_KEY } });
     this.ws = ws;

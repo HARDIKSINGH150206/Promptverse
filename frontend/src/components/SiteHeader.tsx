@@ -3,16 +3,18 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, PhoneCall } from "lucide-react";
 import { API_MODE } from "@/lib/api/client";
 import { useHealth } from "./providers";
 import { Wordmark } from "./Logo";
 import { ButtonLink, cx } from "./ui";
 
 const NAV = [
+  { href: "/call", label: "Call" },
   { href: "/restaurant", label: "Restaurant" },
   { href: "/recipient", label: "Recipient" },
   { href: "/board", label: "Live Board" },
+  { href: "/judge", label: "Judge" },
   { href: "/#how", label: "How it works" },
 ] as const;
 
@@ -116,8 +118,8 @@ export function SiteHeader() {
           <AiStatusPill className="hidden lg:inline-flex" />
           <span className="hidden sm:block"><ModeBadge /></span>
           <span className="hidden sm:block">
-            <ButtonLink href="/board" variant="onDark" size="sm">
-              Open Live Board <ArrowRight className="size-3.5" aria-hidden />
+            <ButtonLink href="/call?role=restaurant" variant="onDark" size="sm">
+              <PhoneCall className="size-3.5" aria-hidden /> Call AnnaRelay <ArrowRight className="size-3.5" aria-hidden />
             </ButtonLink>
           </span>
         </div>

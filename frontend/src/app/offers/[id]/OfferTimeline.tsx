@@ -19,6 +19,8 @@ import { RiskMeter } from "@/components/RiskMeter";
 import { StatusChip } from "@/components/StatusChip";
 import { Timeline } from "@/components/Timeline";
 import { Card, EmptyState, ErrorState, LoadingBlock, SimulatedBadge } from "@/components/ui";
+import { normalizeOffer } from "@/lib/api/live";
+import { useStreamEvent, useStreamStatus } from "@/lib/stream";
 
 /** Primaries in offer order, each standby right after the pickup it covers. */
 function orderAssignments(list: Assignment[]): Assignment[] {
@@ -88,7 +90,11 @@ export function OfferTimeline() {
   const { id } = useParams<{ id: string }>();
   const toast = useToast();
   const now = useNow();
-  const poll = usePoll(() => api.getOffer(id), 2000, id);
+  const streaming = useStreamStatus() === "live";
+  const poll = usePoll(() => api.getOffer(id), streaming ? 15000 : 2000, id);
+  useStreamEvent<{ offer: OfferDetail }>("offer", (d) => {
+    if (d.offer.id === id) poll.setData(normalizeOffer(d.offer));
+  });
   const [skipping, setSkipping] = useState<string | null>(null);
   const offer = poll.data;
 

@@ -11,6 +11,7 @@ import { api } from "@/lib/api/client";
 import { ApiError, errorMessage, type AssignmentAction, type AssignmentStatus, type InboxEntry } from "@/lib/api/types";
 import { fmtTime } from "@/lib/time";
 import { usePoll } from "@/lib/usePoll";
+import { useStreamEvent, useStreamStatus } from "@/lib/stream";
 import { activeDeadline } from "@/components/AssignmentCard";
 import { Countdown } from "@/components/Countdown";
 import { DietTag, dishNames } from "@/components/OfferCard";
@@ -146,7 +147,13 @@ function EntryCard({ e, onChanged }: { e: InboxEntry; onChanged: () => void }) {
 
 export function CollectorInbox() {
   const { recipientId } = useParams<{ recipientId: string }>();
-  const poll = usePoll(() => api.collectorInbox(recipientId), 2000, recipientId);
+  const streaming = useStreamStatus() === "live";
+  const poll = usePoll(() => api.collectorInbox(recipientId), streaming ? 15000 : 2000, recipientId);
+  // the inbox is its own endpoint: refetch as soon as any assignment for this recipient changes
+  const refresh = poll.refresh;
+  useStreamEvent<{ offer: { assignments: { recipient_id: string }[] } }>("offer", (d) => {
+    if (d.offer.assignments.some((a) => a.recipient_id === recipientId)) void refresh();
+  });
   const inbox = poll.data;
 
   if (!inbox) {

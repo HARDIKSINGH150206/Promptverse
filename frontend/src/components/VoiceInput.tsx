@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { LoaderCircle, Mic, Square } from "lucide-react";
 import { api, isLive } from "@/lib/api/client";
 import { errorMessage } from "@/lib/api/types";
+import { WS_BASE_URL } from "@/lib/api/live";
+import { startMic, type Mic as MicHandle } from "@/lib/voice/audio";
 import { useHealth } from "./providers";
 import { cx, inputClass } from "./ui";
 
@@ -57,8 +59,11 @@ export function VoiceInput({
   const { health } = useHealth();
   const caps = useCapabilities();
   const [serverFailed, setServerFailed] = useState(false);
+  const [streamFailed, setStreamFailed] = useState(false);
   const useServer = caps.recorder && !serverFailed && isLive("parse") && health?.stt === "ready";
-  const engine: "server" | "browser" | "none" = useServer ? "server" : caps.browser ? "browser" : "none";
+  // live word-by-word transcription over ws /api/transcribe/stream (contract v3); falls back to record-then-send
+  const useStream = useServer && !streamFailed && typeof window !== "undefined" && "AudioWorkletNode" in window;
+  const engine: "stream" | "server" | "browser" | "none" = useStream ? "stream" : useServer ? "server" : caps.browser ? "browser" : "none";
 
   const [lang, setLang] = useState<Lang>("en-IN");
   const [listening, setListening] = useState(false);
@@ -76,11 +81,86 @@ export function VoiceInput({
   const mediaRef = useRef<MediaRecorder | null>(null);
   const stopTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const streamRef = useRef<{ ws: WebSocket; mic: MicHandle | null } | null>(null);
+
   useEffect(() => () => {
     recRef.current?.abort();
     if (mediaRef.current?.state === "recording") mediaRef.current.stop();
     if (stopTimer.current) clearTimeout(stopTimer.current);
+    streamRef.current?.mic?.stop();
+    streamRef.current?.ws.close();
   }, []);
+
+  /** Words appear as they're spoken; on stop the clean final transcript replaces the live one. */
+  function startStream() {
+    const base = valueRef.current.trimEnd();
+    const show = (t: string) => onChangeRef.current(`${base ? `${base} ` : ""}${t.trim()}`);
+    const ws = new WebSocket(`${WS_BASE_URL}/api/transcribe/stream?language_code=${lang === "unknown" ? "auto" : lang}`);
+    ws.binaryType = "arraybuffer";
+    const session: { ws: WebSocket; mic: MicHandle | null } = { ws, mic: null };
+    streamRef.current = session;
+    let gotText = false;
+    const fail = (msg: string) => {
+      session.mic?.stop();
+      session.mic = null;
+      setListening(false);
+      setTranscribing(false);
+      setStreamFailed(true);
+      if (!gotText) setError(`${msg} Switched to record-then-send; tap the mic again.`);
+    };
+    ws.onmessage = (e) => {
+      let m: { type: string; text?: string; message?: string };
+      try {
+        m = JSON.parse(String(e.data));
+      } catch {
+        return;
+      }
+      if (m.type === "partial" || m.type === "final") {
+        if (m.text) {
+          gotText = true;
+          show(m.text);
+        }
+      } else if (m.type === "done") {
+        if (m.text?.trim()) show(m.text);
+        else if (!gotText) setError("Didn't catch any words. Try again or type below.");
+        setTranscribing(false);
+      } else if (m.type === "error") {
+        fail(m.message ?? "Live transcription is unavailable.");
+      }
+    };
+    ws.onerror = () => fail("Live transcription is unavailable.");
+    ws.onclose = () => {
+      session.mic?.stop();
+      session.mic = null;
+      setListening(false);
+      setTranscribing(false);
+    };
+    ws.onopen = async () => {
+      try {
+        session.mic = await startMic((pcm) => {
+          if (ws.readyState === WebSocket.OPEN) ws.send(pcm);
+        });
+        setListening(true);
+        stopTimer.current = setTimeout(stopStream, MAX_RECORD_MS);
+      } catch {
+        ws.close();
+        setError("Microphone permission was denied. You can type instead.");
+      }
+    };
+  }
+
+  function stopStream() {
+    const s = streamRef.current;
+    if (!s) return;
+    if (stopTimer.current) clearTimeout(stopTimer.current);
+    s.mic?.stop();
+    s.mic = null;
+    setListening(false);
+    if (s.ws.readyState === WebSocket.OPEN) {
+      setTranscribing(true);
+      s.ws.send(JSON.stringify({ event: "end" }));
+    }
+  }
 
   const append = (text: string) => {
     const base = valueRef.current.trimEnd();
@@ -154,16 +234,18 @@ export function VoiceInput({
     if (listening) {
       recRef.current?.stop();
       if (mediaRef.current?.state === "recording") mediaRef.current.stop();
+      stopStream();
       return;
     }
-    if (engine === "server") void startServer();
+    if (engine === "stream") startStream();
+    else if (engine === "server") void startServer();
     else if (engine === "browser") startBrowser();
   }
 
   const langs: { v: Lang; label: string }[] = [
     { v: "en-IN", label: "English" },
     { v: "hi-IN", label: "हिन्दी" },
-    ...(engine === "server" ? [{ v: "unknown" as Lang, label: "Auto-detect" }] : []),
+    ...(engine === "server" || engine === "stream" ? [{ v: "unknown" as Lang, label: "Auto-detect" }] : []),
   ];
 
   return (
@@ -184,7 +266,7 @@ export function VoiceInput({
             {transcribing ? <LoaderCircle className="size-10 animate-spin" aria-hidden /> : listening ? <Square className="size-9 fill-current" aria-hidden /> : <Mic className="size-10" aria-hidden />}
           </button>
           <p className="text-center text-base font-semibold" aria-live="polite">
-            {transcribing ? "Turning your voice into text…" : listening ? "Listening… tap to stop" : "Tap and speak"}
+            {transcribing ? (engine === "stream" ? "Finishing the transcript…" : "Turning your voice into text…") : listening ? "Listening… tap to stop" : "Tap and speak"}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-1 rounded-full bg-white/10 p-1" role="radiogroup" aria-label="Spoken language">
             {langs.map((l) => (
@@ -205,7 +287,7 @@ export function VoiceInput({
             ))}
           </div>
           <p className="text-xs text-white/60">
-            {engine === "server" ? "Server speech-to-text, Indian languages and code-mixed speech" : "Browser speech recognition (Chrome or Edge)"}
+            {engine === "stream" ? "Live transcription: words appear as you speak (Indian languages, code-mixed)" : engine === "server" ? "Server speech-to-text, Indian languages and code-mixed speech" : "Browser speech recognition (Chrome or Edge)"}
           </p>
         </div>
       ) : (
