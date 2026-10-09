@@ -58,6 +58,13 @@ curl https://ai-gateway.vercel.sh/v1/evaluate \
 
 See [`.env.example`](.env.example). Timers are demo-scaled: accept 45 s, reconfirm 20 s after accept, reconfirm timeout 30 s, standby timeout 45 s. `RISK_THRESHOLD=0.25`, `INTENT_MIN_PROBABILITY=0.70`, `EXPLORE_MIN_SLACK_MINS=90`, `DEMO_SEED=42`. `FRONTEND_ORIGIN` accepts a comma-separated list (add `http://<laptop-ip>:3000` for cross-laptop demos).
 
+## Voice agent + live stream (contract v3)
+
+- **`ws /api/agent/call?role=restaurant|recipient`**: an AI phone-style call that replaces the intake forms. It hears through Sarvam realtime STT and thinks with Groq (about 1 s per turn). It speaks through Sarvam TTS, sentence by sentence, in the caller's language (English, Hindi, Hinglish…), and stops talking when the caller talks over it.
+- **Code owns the flow** (`src/agent/session.ts`): collect, then read back (a spoken *yes* sets `diet_confirmed`), then read the safety checklist (a spoken *yes* sets `safety_checklist_confirmed`), then the offer is created through the same `domain/intake.ts` validation as `POST /api/offers`. A *no* to the checklist ends the call without listing. The LLM only extracts fields, classifies yes/no (≥ 85 %), and phrases questions.
+- **`GET /api/stream`** (SSE) pushes `board`, `offer`, `timeline` and `call.*` events as they happen, so the UI renders live with no polling.
+- Frontend build guide: [`FRONTEND_VOICE_AGENT_SPEC.md`](FRONTEND_VOICE_AGENT_SPEC.md). Test without a mic: `npx tsx scripts/agent-check.ts restaurant|unsafe|hindi|recipient`.
+
 ## Decision model: the LLM, with code-side rules (Laya evaluated and not used)
 
 `DECISION_PROVIDER=llm` (default): the LLM (Groq) answers the same typed questions Laya would (choice / yes-no, with probabilities). Plain code still decides everything that matters: the 70 % intent threshold, the fixed reply table, the diet confirmation rules, and a deterministic **safety keyword floor** ("left out", "since afternoon", "smells" -> at least 75 % concern).

@@ -1,6 +1,7 @@
 import { db } from "./db";
 import { newId } from "../domain/ids";
 import { nowIso } from "../domain/clock";
+import { bus } from "../realtime/bus";
 import type {
   Assignment, AssignmentRow, AssignmentStatus, Demand, DemandRow, EventRow, Offer, OfferRow,
   RecipientRow, RestaurantRow, SelectionInfo, TimelineEvent, TimelineEventType,
@@ -52,6 +53,7 @@ export function insertDemand(d: Omit<DemandRow, "id" | "created_at" | "meals_mat
     `INSERT INTO demands (id, recipient_id, people_count, meals_matched, diet, needed_by, max_distance_km, notes, status, raw_transcript, created_at)
      VALUES (@id, @recipient_id, @people_count, @meals_matched, @diet, @needed_by, @max_distance_km, @notes, @status, @raw_transcript, @created_at)`
   ).run(row);
+  bus.emitBus("board_changed");
   return row;
 }
 /** Adjust meals_matched by delta and recompute demand status. */
@@ -64,6 +66,7 @@ export function adjustDemandMatched(id: string, delta: number): void {
     status = matched <= 0 ? "open" : matched >= d.people_count ? "matched" : "partially_matched";
   }
   db.prepare("UPDATE demands SET meals_matched = ?, status = ? WHERE id = ?").run(matched, status, id);
+  bus.emitBus("board_changed");
 }
 export function setDemandStatus(id: string, status: DemandRow["status"]): void {
   db.prepare("UPDATE demands SET status = ? WHERE id = ?").run(status, id);
@@ -94,11 +97,13 @@ export function insertOffer(o: OfferRow): void {
     `INSERT INTO offers (id, restaurant_id, items_json, meal_count, meals_assigned, meals_collected, diet, cooked_at, safe_until, photo_url, raw_transcript, pickup_notes, status, fallback_route, created_at)
      VALUES (@id, @restaurant_id, @items_json, @meal_count, @meals_assigned, @meals_collected, @diet, @cooked_at, @safe_until, @photo_url, @raw_transcript, @pickup_notes, @status, @fallback_route, @created_at)`
   ).run(o);
+  bus.emitBus("offer_changed", o.id);
 }
 export function updateOffer(id: string, patch: Partial<OfferRow>): void {
   const keys = Object.keys(patch);
   if (!keys.length) return;
   db.prepare(`UPDATE offers SET ${keys.map((k) => `${k} = @${k}`).join(", ")} WHERE id = @id`).run({ ...patch, id });
+  bus.emitBus("offer_changed", id);
 }
 export function toOffer(o: OfferRow): Offer {
   const r = getRestaurant(o.restaurant_id);
@@ -133,11 +138,14 @@ export function insertAssignment(a: AssignmentRow): void {
     `INSERT INTO assignments (id, offer_id, recipient_id, demand_id, meals, status, reliability_at_assignment, selection_json, distance_km, offered_at, respond_by, accepted_at, reconfirm_by, collected_at, eta_promised, p_fail, is_standby, standby_for_assignment_id, last_reply_json, was_rematched)
      VALUES (@id, @offer_id, @recipient_id, @demand_id, @meals, @status, @reliability_at_assignment, @selection_json, @distance_km, @offered_at, @respond_by, @accepted_at, @reconfirm_by, @collected_at, @eta_promised, @p_fail, @is_standby, @standby_for_assignment_id, @last_reply_json, @was_rematched)`
   ).run(a);
+  bus.emitBus("offer_changed", a.offer_id);
 }
 export function updateAssignment(id: string, patch: Partial<AssignmentRow>): void {
   const keys = Object.keys(patch);
   if (!keys.length) return;
   db.prepare(`UPDATE assignments SET ${keys.map((k) => `${k} = @${k}`).join(", ")} WHERE id = @id`).run({ ...patch, id });
+  const offerId = (db.prepare("SELECT offer_id FROM assignments WHERE id = ?").get(id) as { offer_id: string } | undefined)?.offer_id;
+  if (offerId) bus.emitBus("offer_changed", offerId);
 }
 export function toAssignment(a: AssignmentRow): Assignment {
   const r = getRecipient(a.recipient_id);
@@ -158,6 +166,8 @@ export function toAssignment(a: AssignmentRow): Assignment {
 export function addEvent(offerId: string, type: TimelineEventType, message: string, assignmentId: string | null = null): EventRow {
   const row: EventRow = { id: newId("e"), offer_id: offerId, at: nowIso(), type, message, assignment_id: assignmentId };
   db.prepare("INSERT INTO events (id, offer_id, at, type, message, assignment_id) VALUES (@id, @offer_id, @at, @type, @message, @assignment_id)").run(row);
+  bus.emitBus("timeline", row);
+  bus.emitBus("offer_changed", offerId);
   return row;
 }
 export function listEvents(offerId: string): TimelineEvent[] {

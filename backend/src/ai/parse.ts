@@ -87,6 +87,8 @@ export function fixPast(iso: string | null, ref = nowMs()): string | null {
   let t = Date.parse(iso);
   const grace = 15 * 60000;
   for (let i = 0; i < 2 && t > ref + grace; i++) t -= H12;
+  // most RECENT occurrence: "made at 2" said at 4 pm is 2 pm, not 2 am
+  while (t + H12 <= ref + grace) t += H12;
   return t <= ref + grace ? new Date(t).toISOString() : null;
 }
 

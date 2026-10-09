@@ -3,7 +3,8 @@ import fs from "node:fs";
 import { z } from "zod";
 import { intakeGuardrail } from "../ai/guardrail";
 import { parseOffer } from "../ai/parse";
-import { addEvent, getRestaurant, insertOffer } from "../db/repo";
+import { getRestaurant } from "../db/repo";
+import { createOffer, CreateOfferBody } from "../domain/intake";
 import { nowIso, nowMs } from "../domain/clock";
 import { fmtTime } from "../domain/format";
 import { newId } from "../domain/ids";
@@ -37,56 +38,15 @@ offers.post("/api/offers/parse", upload.single("photo"), async (req, res) => {
   res.json({ parsed, photo_url: photoUrl });
 });
 
-const CreateOfferBody = z.object({
-  restaurant_id: z.string().min(1),
-  items: z.array(z.object({ name: z.string().min(1), quantity: z.number().nonnegative(), unit: z.string() })),
-  meal_count: z.number().int(),
-  diet: z.enum(["veg", "nonveg"]),
-  cooked_at: isoString,
-  safe_until: isoString,
-  photo_url: z.string().nullable().default(null),
-  raw_transcript: z.string().nullable().default(null),
-  pickup_notes: z.string().nullable().default(null),
-  confirmations: z.object({ diet_confirmed: z.boolean(), safety_checklist_confirmed: z.boolean() }).optional(),
-});
-
 offers.post("/api/offers", async (req, res) => {
   const body = validate(CreateOfferBody, req.body);
-  if (body.confirmations?.diet_confirmed !== true || body.confirmations?.safety_checklist_confirmed !== true) {
-    throw new AppError(400, "CONFIRMATION_REQUIRED", "Both diet_confirmed and safety_checklist_confirmed must be true");
-  }
-  if (body.meal_count < 1) throw new AppError(400, "VALIDATION_ERROR", "meal_count must be at least 1");
-  const safe = Date.parse(body.safe_until);
-  if (safe <= nowMs()) throw new AppError(400, "VALIDATION_ERROR", "safe_until is in the past");
-  if (safe <= Date.parse(body.cooked_at)) throw new AppError(400, "VALIDATION_ERROR", "safe_until must be after cooked_at");
-  const restaurant = getRestaurant(body.restaurant_id);
-  if (!restaurant) throw new AppError(404, "NOT_FOUND", `Restaurant ${body.restaurant_id} not found`);
-
   let guardrail = body.raw_transcript ? recentGuardrails.get(body.raw_transcript) : undefined;
-  if (!guardrail && body.raw_transcript) guardrail = await intakeGuardrail(body.raw_transcript, body.items, body.diet);
-
-  const row: OfferRow = {
-    id: newId("o"), restaurant_id: body.restaurant_id, items_json: JSON.stringify(body.items),
-    meal_count: body.meal_count, meals_assigned: 0, meals_collected: 0, diet: body.diet,
-    cooked_at: new Date(body.cooked_at).toISOString(), safe_until: new Date(safe).toISOString(),
-    photo_url: body.photo_url, raw_transcript: body.raw_transcript, pickup_notes: body.pickup_notes,
-    status: "open", fallback_route: null, created_at: nowIso(),
-  };
-  insertOffer(row);
-  const what = body.items.map((i) => i.name).join(", ") || "food";
-  addEvent(row.id, "offer_created",
-    `${restaurant.name} listed ${body.meal_count} ${body.diet === "veg" ? "veg" : "non-veg"} meals (${what}), safe until ${fmtTime(row.safe_until)}. Diet and safety checklist confirmed.`);
-  // OfferDetail has no guardrail field, so the timeline event carries the full explanation.
-  if (guardrail?.needs_confirmation) {
-    const safety = guardrail.safety_concern_probability;
-    const confirmed = safety != null && safety > 0.3 ? "the diet and the safety checklist" : "the diet";
-    const reasons = guardrail.reasons.length ? guardrail.reasons.join("; ") : "automatic check asked for confirmation";
-    addEvent(row.id, "guardrail_flag",
-      `Intake check (${guardrail.source}): ${reasons}. The restaurant confirmed ${confirmed}.`);
+  // only spend a model call once the cheap checks pass
+  if (!guardrail && body.raw_transcript && body.confirmations?.diet_confirmed && body.confirmations?.safety_checklist_confirmed) {
+    guardrail = await intakeGuardrail(body.raw_transcript, body.items, body.diet);
   }
-  addEvent(row.id, "matching_started", "Matching started: only recipients who already need this food, ranked by reliability.");
-  runMatching(row.id);
-  res.status(201).json(offerDetail(row.id));
+  const id = createOffer(body, guardrail ?? null, "web");
+  res.status(201).json(offerDetail(id));
 });
 
 offers.get("/api/offers/:id", (req, res) => {

@@ -25,4 +25,9 @@ describe("LLM time sanity", () => {
   it("a cooked time in the future moves back", () => {
     expect(fixPast("2026-10-09T13:30:00Z", NOW)).toBe(iso("2026-10-09T01:30:00Z"));
   });
+
+  it("'made at 2' said at 2:40 pm is 2 pm today, not 2 am", () => {
+    // model returned 02:00 IST (20:30Z the day before)
+    expect(fixPast("2026-10-08T20:30:00Z", NOW)).toBe(iso("2026-10-09T08:30:00Z"));
+  });
 });

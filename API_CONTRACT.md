@@ -6,6 +6,8 @@
 > **v2 adds:** Bayesian reliability with uncertainty, Thompson-sampling exploration, risk-aware standby backups, free-text reply understanding, and Laya decision-model guardrails at intake.
 >
 > **v2.1 (additive, approved by the team):** `POST /api/transcribe` (multilingual speech-to-text) and the `stt` field on `GET /api/health`. Nothing existing changed.
+>
+> **v3 (additive, approved by the team):** live word-by-word transcription (`ws /api/transcribe/stream`), the live event stream (`GET /api/stream`, SSE) and the voice-agent call (`ws /api/agent/call`). Nothing existing changed; the REST endpoints and forms keep working.
 
 - Backend base URL (local): `http://localhost:4000`
 - Frontend (local): `http://localhost:3000`
@@ -272,6 +274,8 @@ type AssignmentAction =
 - `400 VALIDATION_ERROR`: no audio, or not an audio file
 - `503 STT_UNAVAILABLE`: every provider failed. The client falls back to the browser Web Speech API or the editable textarea.
 
+**Live variant (v3):** `ws://<backend>/api/transcribe/stream?language_code=auto`. Send binary PCM (16-bit LE, mono, 16 kHz) and `{"event":"end"}` when done; receive `{"type":"ready"}`, `{"type":"partial","text","final_text","language"}` (words as they're spoken), `{"type":"final","text","language"}`, `{"type":"done","text","language"}` and `{"type":"error","code":"STT_UNAVAILABLE","message"}` (fall back to the POST above).
+
 Multilingual and code-mixed speech is supported (Sarvam first, Groq Whisper as fallback). The client puts `text` into the editable transcript box and sends it to the existing `/parse` call as `transcript`. Transcription never creates or changes anything by itself.
 
 ### Live board (polled every 2 s)
@@ -293,6 +297,55 @@ Telegram free-text messages from a linked chat go through the same logic (applie
 ### Demo controls (labelled "Demo control" in the UI)
 - `POST /api/demo/reset` → `{ "ok": true }`
 - `POST /api/demo/fast-forward/:assignmentId` → moves the active deadline (`respond_by` or `reconfirm_by`) to now → `OfferDetail`
+
+### Live stream (v3): Server-Sent Events
+`GET /api/stream` (optional `?offer_id=o_x` limits `offer` / `timeline` events to one offer). Use `EventSource`. Replaces polling when connected; keep polling `/api/board` as the fallback if the stream drops.
+
+| event | data | when |
+| --- | --- | --- |
+| `hello` | `{ "board": Board }` | on connect |
+| `board` | `{ "board": Board }` | any change; coalesced, at most every ~250 ms |
+| `offer` | `{ "offer": OfferDetail }` | an offer or its assignments changed; coalesced per offer, ~150 ms |
+| `timeline` | `{ "event": TimelineEvent }` | each new timeline event, immediately (animate these in) |
+| `call.started` | `{ "call_id", "role": "restaurant" \| "recipient", "language": string \| null }` | a voice-agent call began |
+| `call.caption` | `{ "call_id", "speaker": "user" \| "agent", "text", "final": boolean }` | something was said on a call |
+| `call.draft` | `{ "call_id", "role", "phase", "draft": CallDraft, "missing": string[], "guardrail": IntakeGuardrail \| null }` | the call's draft changed |
+| `call.ended` | `{ "call_id", "outcome": string, "offer_id": string \| null, "demand_id": string \| null }` | the call ended |
+
+### Voice agent call (v3): WebSocket
+`ws://<backend>/api/agent/call?role=restaurant|recipient&restaurant_id=&recipient_id=&language_code=auto`
+
+An AI phone-style call that replaces the intake forms. `restaurant_id` / `recipient_id` are optional (pre-selects who is calling). Only origins in the backend's `FRONTEND_ORIGIN` are accepted.
+
+**Client → server**
+- Binary frames: microphone audio as raw PCM **16-bit LE, mono, 16 000 Hz**, in ~100 ms chunks. Use `getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } })`.
+- `{"event":"text","text":"..."}`: a typed caller turn (works without a mic).
+- `{"event":"playback_done"}`: the agent's audio for the latest turn finished playing.
+- `{"event":"end"}`: hang up.
+
+**Server → client** (JSON text frames)
+
+| type | fields | meaning |
+| --- | --- | --- |
+| `ready` | `call_id, role, stt: boolean, tts: boolean` | call is open |
+| `caption` | `speaker: "user", text, final` | live caller transcript (partials while speaking, then final) |
+| `thinking` | | the agent is working on a reply (show a pulse) |
+| `agent` | `text, phase, turn` | what the agent is saying (show as a caption immediately) |
+| `audio` | `turn, index, format: "wav", sample_rate, text, data` (base64) | agent speech for that turn, one clip per sentence, play in `index` order |
+| `audio_unavailable` | `turn, index, text` | TTS failed for that sentence; the client may speak `text` with `speechSynthesis` |
+| `audio_end` | `turn` | no more clips for that turn |
+| `interrupt` | | the caller started talking: stop playback now |
+| `draft` | `call_id, role, phase, draft: CallDraft, missing: string[], guardrail: IntakeGuardrail \| null, confirmations: { diet_confirmed, safety_checklist_confirmed }` | render the card live: fields in `missing` show skeletons, filled fields animate in |
+| `offer_created` | `offer: OfferDetail` | restaurant call: the offer is live (then follow it via `/api/stream` `offer` / `timeline`) |
+| `demand_created` | `demand: Demand` | recipient call: the demand is live |
+| `notice` | `code, message` | non-fatal (e.g. `STT_UNAVAILABLE`: typing still works) |
+| `ended` | `outcome, offer_id?, demand_id?` | the call is over; the socket closes |
+
+`phase`: `collect` → `confirm_details` → `safety_checklist` (restaurant only) → `submitting` → `narrating` → `done` (or `ended`).
+
+`CallDraft` (restaurant): `{ restaurant_id?, restaurant_name, items?: OfferItem[], meal_count?, diet?: "veg"|"nonveg", cooked_at?, safe_until?, pickup_notes? }`. (Recipient): `{ recipient_id?, recipient_name, people_count?, diet?: Diet, needed_by?, max_distance_km?, notes? }`. Times are ISO UTC.
+
+**Safety rules (same as the forms):** the agent reads the details back and the caller must say **yes** (that sets `diet_confirmed`), then it reads the safety checklist (covered, kept hot or chilled, never served on plates) and the caller must say **yes** again (that sets `safety_checklist_confirmed`). A "yes" counts only at ≥ 85 % confidence; any change to the details resets both. The offer is then created through the same validation as `POST /api/offers`. A "no" to the checklist ends the call without listing the food.
 
 ### Static files
 `GET /uploads/<file>`

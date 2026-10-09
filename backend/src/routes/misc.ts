@@ -10,6 +10,8 @@ import { addSecs, nowIso } from "../domain/clock";
 import { offerDetail } from "../domain/timeline";
 import { AppError, type ImpactCard } from "../domain/types";
 import { tick } from "../scheduler";
+import { bus } from "../realtime/bus";
+import { streamHandler } from "../realtime/stream";
 import { telegramStatus } from "../telegram/bot";
 
 export const misc = Router();
@@ -25,6 +27,8 @@ misc.get("/api/restaurants", (_req, res) => {
 misc.get("/api/recipients", (_req, res) => {
   res.json(listRecipients());
 });
+
+misc.get("/api/stream", streamHandler);
 
 misc.get("/api/board", (_req, res) => {
   res.json(board());
@@ -48,6 +52,7 @@ misc.get("/api/impact/:restaurantId", (req, res) => {
 
 misc.post("/api/demo/reset", (_req, res) => {
   seed({ keepTelegramLinks: true });
+  bus.emitBus("board_changed");
   res.json({ ok: true });
 });
 

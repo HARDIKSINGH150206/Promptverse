@@ -13,6 +13,7 @@ import { transcribeRouter } from "./routes/transcribe";
 import { startScheduler } from "./scheduler";
 import { startBot } from "./telegram/bot";
 import { streamWss } from "./ai/sttStream";
+import { agentWss } from "./agent/server";
 
 export function createApp() {
   const app = express();
@@ -45,11 +46,12 @@ if (!process.env.VITEST) {
     // CORS doesn't cover WebSockets: only our frontend origins (or non-browser clients) may use the Sarvam key
     const origin = req.headers.origin;
     const allowed = config.FRONTEND_ORIGIN.split(",").map((s) => s.trim());
-    if (path !== "/api/transcribe/stream" || (origin && !allowed.includes("*") && !allowed.includes(origin))) {
+    const wss = path === "/api/transcribe/stream" ? streamWss : path === "/api/agent/call" ? agentWss : null;
+    if (!wss || (origin && !allowed.includes("*") && !allowed.includes(origin))) {
       socket.destroy();
       return;
     }
-    streamWss.handleUpgrade(req, socket, head, (ws) => streamWss.emit("connection", ws, req));
+    wss.handleUpgrade(req, socket, head, (ws) => wss.emit("connection", ws, req));
   });
   startScheduler();
   void startBot();
