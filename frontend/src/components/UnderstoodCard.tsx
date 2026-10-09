@@ -33,6 +33,8 @@ export function UnderstoodCard({ understood, compact = false, className }: { und
     .slice(0, compact ? 2 : 3);
   const riskHigh = u.at_risk_probability > 0.3;
   const changed = !u.action_taken.startsWith("No change");
+  // fallback rules mean no model answered: there are no probabilities to show
+  const unavailable = u.source === "fallback_rules";
 
   return (
     <div className={cx("rounded-2xl border border-blue/20 bg-blue/[0.04] p-3.5 text-sm", className)}>
@@ -41,9 +43,10 @@ export function UnderstoodCard({ understood, compact = false, className }: { und
           <MessageSquareQuote className="mt-0.5 size-4 shrink-0 text-blue" aria-hidden />
           <span className="italic">&ldquo;{u.text}&rdquo;</span>
         </p>
-        <AiBadge source={u.source} probability={u.intent_probability} />
+        <AiBadge source={u.source} probability={unavailable ? null : u.intent_probability} />
       </div>
 
+      {unavailable ? null : (<>
       <p className="mt-2.5 text-xs font-bold uppercase tracking-wider text-navy/55">Understood as</p>
       <ul className="mt-1.5 space-y-1.5">
         {top.map((k) => (
@@ -59,6 +62,7 @@ export function UnderstoodCard({ understood, compact = false, className }: { und
           <span className="tabular text-right text-navy/75">{pct(u.at_risk_probability)}</span>
         </li>
       </ul>
+      </>)}
 
       {(u.meals !== null || u.eta) && !compact ? (
         <p className="mt-2 text-navy/70">
