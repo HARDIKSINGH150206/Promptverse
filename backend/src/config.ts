@@ -22,9 +22,11 @@ export const config = {
   LLM_API_KEY: str("LLM_API_KEY"),
   LLM_MODEL: str("LLM_MODEL"),
 
-  DECISION_PROVIDER: str("DECISION_PROVIDER", "mock") as "laya" | "mock",
+  DECISION_PROVIDER: str("DECISION_PROVIDER", "mock") as "laya" | "laya_local" | "hybrid" | "llm" | "mock",
   AI_GATEWAY_API_KEY: str("AI_GATEWAY_API_KEY"),
   LAYA_MODEL: str("LAYA_MODEL", "convaiinnovations/laya-free"),
+  LAYA_LOCAL_URL: str("LAYA_LOCAL_URL", "http://127.0.0.1:8000"),
+  LAYA_LOCAL_TIMEOUT_MS: num("LAYA_LOCAL_TIMEOUT_MS", 15000),
 
   TELEGRAM_BOT_TOKEN: str("TELEGRAM_BOT_TOKEN"),
   TELEGRAM_BOT_USERNAME: str("TELEGRAM_BOT_USERNAME"),

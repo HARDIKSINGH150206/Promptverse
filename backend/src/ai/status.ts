@@ -14,6 +14,6 @@ export function llmStatus(): LlmStatus {
 
 export function layaStatus(): LayaStatus {
   if (config.DECISION_PROVIDER === "mock") return "mock";
-  if (!config.AI_GATEWAY_API_KEY) return "missing_key";
+  if (config.DECISION_PROVIDER === "laya" && !config.AI_GATEWAY_API_KEY) return "missing_key";
   return layaLastOk === false ? "unavailable" : "ready";
 }

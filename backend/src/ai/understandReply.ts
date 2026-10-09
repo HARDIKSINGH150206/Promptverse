@@ -34,7 +34,7 @@ export async function understandReply(text: string, a: AssignmentRow, offer: Off
     assignment: { status: a.status, meals: a.meals, safe_until_ist: fmtTime(offer.safe_until), distance_km: a.distance_km },
   };
   try {
-    const { answers, source } = await evaluate(state, QUESTIONS);
+    const { answers, choiceSource: source } = await evaluate(state, QUESTIONS);
     const intentA = answers.intent as ChoiceA | undefined;
     const riskA = answers.at_risk as BooleanA | undefined;
     if (!intentA || !riskA || !(REPLY_INTENTS as string[]).includes(intentA.choice)) {

@@ -2,7 +2,7 @@ import { Bot, InlineKeyboard, type Context } from "grammy";
 import { config } from "../config";
 import {
   getAssignmentRow, getOfferRow, getRecipient, getRecipientByChat, getRecipientByLinkCode, getRestaurant,
-  linkTelegram, listAssignmentRows, listAssignmentsForRecipient,
+  linkTelegram, listAssignmentRows, listAssignmentsForRecipient, listRecipientRows,
 } from "../db/repo";
 import { fmtTime, pct } from "../domain/format";
 import { setNotifySink, type Notice } from "../domain/notify";
@@ -82,16 +82,18 @@ export async function startBot(): Promise<void> {
   bot.command("start", async (ctx) => {
     const code = ctx.match?.trim();
     if (!code) {
-      await ctx.reply("Welcome to AnnaRelay. Open your link from the AnnaRelay app (t.me/<bot>?start=<code>) or send /start <link code>.");
+      // Demo convenience: pick which (simulated) recipient this chat speaks for.
+      const k = new InlineKeyboard();
+      for (const r of listRecipientRows()) k.text(r.name, `lnk:${r.link_code}`).row();
+      await ctx.reply("Welcome to AnnaRelay. Which recipient are you collecting for? (or send /start <link code>)", { reply_markup: k });
       return;
     }
-    const r = getRecipientByLinkCode(code);
-    if (!r) {
-      await ctx.reply(`Sorry, I don't recognise the code "${code}".`);
-      return;
-    }
-    linkTelegram(r.id, String(ctx.chat.id));
-    await ctx.reply(`Linked to ${r.name}. Food offers will arrive here. You can tap buttons or just reply in your own words.`);
+    await link(ctx, code);
+  });
+
+  bot.callbackQuery(/^lnk:(.+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await link(ctx, ctx.match[1]);
   });
 
   bot.on("callback_query:data", async (ctx) => {
@@ -171,6 +173,16 @@ function confirmation(u: ReplyUnderstanding, a: AssignmentRow): string {
   }
   parts.push(`Action: ${u.action_taken}.`);
   return parts.join(" ");
+}
+
+async function link(ctx: Context, code: string): Promise<void> {
+  const r = getRecipientByLinkCode(code);
+  if (!r || !ctx.chat) {
+    await ctx.reply(`Sorry, I don't recognise the code "${code}".`);
+    return;
+  }
+  linkTelegram(r.id, String(ctx.chat.id));
+  await ctx.reply(`Linked to ${r.name}. Food offers will arrive here. Tap the buttons, or just reply in your own words (any language).`);
 }
 
 export async function stopBot(): Promise<void> {

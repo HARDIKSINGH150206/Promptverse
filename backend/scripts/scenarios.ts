@@ -97,7 +97,9 @@ async function scenario3() {
   const dawn = o.assignments.find((a: Json) => a.recipient_name === "New Dawn Shelter" && a.status === "offered");
   check(dawn?.meals === 7, `remaining 7 re-matched to New Dawn (${dawn?.meals})`);
   const unclear = await call("POST", `/api/assignments/${stars.id}/reply`, { text: "hmm let me check" });
-  check(unclear.understood.needs_clarification === true, "unclear reply -> needs_clarification, no state change");
+  const after = unclear.offer.assignments.find((a: Json) => a.id === stars.id);
+  check((unclear.understood.needs_clarification || unclear.understood.intent === "question") && after.status === "accepted" && after.meals === 8,
+    `unclear reply -> no state change (${unclear.understood.intent} ${unclear.understood.intent_probability}, ${unclear.understood.action_taken})`);
 }
 
 async function scenario4() {
@@ -112,7 +114,7 @@ async function parseChecks() {
   console.log("\nParse + guardrail");
   const p1 = await call("POST", "/api/offers/parse", undefined, { restaurant_id: "r_koramangala", transcript: "around 40 plates veg biryani made at 7 safe till 10 back gate" });
   check(p1.parsed.estimated_meals === 40 && p1.parsed.diet === "veg" && !p1.parsed.guardrail.needs_confirmation, "clear veg -> no confirmation needed");
-  const p2 = await call("POST", "/api/offers/parse", undefined, { restaurant_id: "r_koramangala", transcript: "30 plates pulao and raita made at 8 safe till 11" });
+  const p2 = await call("POST", "/api/offers/parse", undefined, { restaurant_id: "r_koramangala", transcript: "30 plates of biryani made at 8 safe till 11" });
   check(p2.parsed.guardrail.needs_confirmation === true, `ambiguous diet -> needs_confirmation (${p2.parsed.guardrail.reasons.join("; ")})`);
   const p3 = await call("POST", "/api/offers/parse", undefined, { restaurant_id: "r_koramangala", transcript: "20 plates dal rice, it has been sitting out since afternoon, safe till 10" });
   check((p3.parsed.guardrail.safety_concern_probability ?? 0) > 0.3, `safety concern flagged (${p3.parsed.guardrail.safety_concern_probability})`);

@@ -1,6 +1,7 @@
 // Intake guardrail: one Laya call per parsed offer. Laya can only ADD a confirmation step, never remove one.
 import type { IntakeGuardrail, OfferItem } from "../domain/types";
 import { pct } from "../domain/format";
+import { SAFETY_RE } from "./mock";
 import { DecisionUnavailable, evaluate, type BooleanA, type ChoiceA, type Question } from "./laya";
 
 const QUESTIONS: Record<string, Question> = {
@@ -21,18 +22,31 @@ const QUESTIONS: Record<string, Question> = {
 
 export const DIET_MIN_PROBABILITY = 0.95;
 export const SAFETY_WARN_PROBABILITY = 0.3;
+export const SAFETY_KEYWORD_FLOOR = 0.75;
 
 export async function intakeGuardrail(
   transcript: string, items: OfferItem[], extractedDiet: "veg" | "nonveg" | null
 ): Promise<IntakeGuardrail> {
   try {
-    const { answers, source } = await evaluate({ transcript, items, extracted_diet: extractedDiet }, QUESTIONS);
+    const { answers, source, laya } = await evaluate({ transcript, items, extracted_diet: extractedDiet }, QUESTIONS);
     const diet = answers.diet as ChoiceA | undefined;
-    const safety = answers.safety_concern as BooleanA | undefined;
+    let safety = answers.safety_concern as BooleanA | undefined;
     if (!diet || !safety || (diet.choice !== "veg" && diet.choice !== "nonveg")) {
       throw new DecisionUnavailable("Unexpected Laya answer shape");
     }
-    return decide(diet, safety, extractedDiet, source);
+    // Plain-code floor: model scores for the same sentence vary run to run, so explicit
+    // warning words always raise the concern. Like the models, this can only add caution.
+    const keywordHit = transcript.match(SAFETY_RE)?.[0];
+    if (keywordHit && safety.probability < SAFETY_KEYWORD_FLOOR) safety = { type: "boolean", probability: SAFETY_KEYWORD_FLOOR };
+    const g = decide(diet, safety, extractedDiet, source);
+    if (keywordHit) g.reasons.push(`Message mentions "${keywordHit}" (keyword check)`);
+    // Hybrid cross-check: if Laya reads the diet differently, ask the restaurant (can only add a step).
+    const ld = laya?.diet as ChoiceA | undefined;
+    if (ld && ld.choice !== diet.choice && (ld.probabilities[ld.choice] ?? 0) > 0.6) {
+      g.needs_confirmation = true;
+      g.reasons.push(`Second check (Laya) reads this as ${ld.choice === "veg" ? "veg" : "non-veg"} (${pct(ld.probabilities[ld.choice] ?? 0)})`);
+    }
+    return g;
   } catch (err) {
     if (!(err instanceof DecisionUnavailable)) console.warn("[guardrail]", err);
     return {
@@ -46,7 +60,7 @@ export async function intakeGuardrail(
 }
 
 export function decide(
-  diet: ChoiceA, safety: BooleanA, extractedDiet: "veg" | "nonveg" | null, source: "laya" | "mock"
+  diet: ChoiceA, safety: BooleanA, extractedDiet: "veg" | "nonveg" | null, source: "laya" | "llm" | "mock"
 ): IntakeGuardrail {
   const label = diet.choice as "veg" | "nonveg";
   const p = diet.probabilities[label] ?? 0;

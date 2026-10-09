@@ -9,7 +9,10 @@
     "seed": "tsx src/db/seed.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "scenarios": "tsx scripts/scenarios.ts"
+    "scenarios": "tsx scripts/scenarios.ts",
+    "laya:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-laya.ps1",
+    "laya": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-laya.ps1",
+    "laya:check": "tsx scripts/laya-check.ts"
   },
   "engines": {
     "node": ">=20"
