@@ -19,6 +19,7 @@ export interface BrainInput {
   history: { speaker: "agent" | "caller"; text: string }[];
   directory: { id: string; name: string; area: string }[];
   nowMs: number;
+  language: string | null; // the call's language so far (BCP-47), null until we know
 }
 
 const Item = z.object({ name: z.string(), quantity: z.number().optional().nullable(), unit: z.string().optional().nullable() });
@@ -63,11 +64,11 @@ Times: give cooked_at / safe_until / needed_by as the LOCAL clock time the calle
 
 Rules:
 - Put in "updates" ONLY what the caller actually said in THIS turn (corrections included). Never guess a field, never invent safe_until or needed_by.
-- If a yes/no question is pending, classify the caller's reply in "answer" ("yes" / "no" / "unclear") with "answer_probability". A correction ("no, it's 30 plates") is "no" plus the update.
-- "say": what you speak next, 1-2 short sentences, warm and natural, in the caller's language (Hindi if they speak Hindi, Hinglish if they mix, etc.). Acknowledge briefly, then ask for the NEXT missing field (MISSING is in priority order). Ask one thing at a time.
+- If a yes/no question is pending, classify the caller's reply in "answer" ("yes" / "no" / "unclear") with "answer_probability". A correction ("no, it's 30 plates") is "no" plus the update. A reply that only repeats the question ("yes or no?"), asks something back, or says yes with any reservation ("yes, but...", "mostly") is "unclear". If any part of a safety question gets a no, the answer is "no".
+- "say": what you speak next, 1-2 short sentences, warm and natural, in the language the caller used in THIS turn (if they switch language, switch with them). Write it in that language's own script so the voice reads it correctly: Hindi in Devanagari, Kannada in Kannada script, Tamil in Tamil script, and so on; dish names and English words may stay in English. Acknowledge briefly, then ask for the NEXT missing field (MISSING is in priority order). Ask one thing at a time.
 - You never decide that food is safe and you never confirm anything on the caller's behalf. Do not say the offer is created; the system handles confirmations.
-- "language": BCP-47 code of the caller's language (en-IN, hi-IN, kn-IN, ta-IN, ...).
-- "wants_to_end": true only if the caller wants to stop the call.
+- "language": BCP-47 code of the language the caller used in THIS turn (en-IN, hi-IN, kn-IN, ta-IN, te-IN, mr-IN, bn-IN, ...). Hindi written in English letters (Hinglish) is hi-IN.
+- "wants_to_end": true only if the caller explicitly asks to stop or hang up ("bye", "cancel the call"). "That's all" / "nothing else" after giving details is NOT ending the call.
 
 Return ONLY JSON: {"updates":{...},"answer":...,"answer_probability":...,"wants_to_end":false,"language":"en-IN","say":"..."}`;
 }
@@ -75,6 +76,7 @@ Return ONLY JSON: {"updates":{...},"answer":...,"answer_probability":...,"wants_
 function user(input: BrainInput): string {
   const hist = input.history.slice(-8).map((h) => `${h.speaker === "agent" ? "AGENT" : "CALLER"}: ${h.text}`).join("\n");
   return `DIRECTORY: ${JSON.stringify(input.directory)}
+CALL LANGUAGE SO FAR: ${input.language ?? "not known yet"}
 PHASE: ${input.phase}
 DRAFT SO FAR: ${JSON.stringify(input.draft)}
 MISSING (priority order): ${JSON.stringify(input.missing)}

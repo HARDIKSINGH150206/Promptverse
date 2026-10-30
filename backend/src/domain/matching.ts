@@ -84,6 +84,7 @@ export function tooLateForAnyone(offer: OfferRow): boolean {
 }
 
 export function runMatching(offerId: string): void {
+  if (config.MATCHING === "off") return;
   tx(() => runMatchingInner(offerId));
 }
 

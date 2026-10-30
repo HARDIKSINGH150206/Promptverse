@@ -26,6 +26,12 @@ const SAY: Record<CallRole, string[]> = {
   ],
 };
 
+// Auto follows whatever the caller speaks. Picking one also tunes speech recognition to it.
+const LANGS: [string, string][] = [
+  ["auto", "Auto"], ["en-IN", "English"], ["hi-IN", "हिन्दी"], ["kn-IN", "ಕನ್ನಡ"], ["ta-IN", "தமிழ்"],
+  ["te-IN", "తెలుగు"], ["mr-IN", "मराठी"], ["bn-IN", "বাংলা"],
+];
+
 const OUTCOME: Record<string, string> = {
   offer_created: "Offer listed and matched.",
   demand_created: "Request posted.",
@@ -33,6 +39,8 @@ const OUTCOME: Record<string, string> = {
   caller_ended: "Call ended.",
   caller_hung_up: "Call ended.",
   idle_timeout: "Call ended after a quiet spell.",
+  unconfirmed: "Nothing listed: the agent couldn't get a clear yes or no.",
+  time_limit: "Call ended at the time limit.",
 };
 
 function RoleToggle({ role, onChange, disabled }: { role: CallRole; onChange: (r: CallRole) => void; disabled?: boolean }) {
@@ -62,6 +70,7 @@ export function CallScreen() {
   const role: CallRole = params.get("role") === "recipient" ? "recipient" : "restaurant";
   const presetId = params.get(role === "restaurant" ? "restaurant_id" : "recipient_id") ?? "";
   const [who, setWho] = useState(presetId);
+  const [lang, setLang] = useState("auto");
   const { health } = useHealth();
   const liveBackend = isLive("parse") && isLive("offers");
 
@@ -71,8 +80,8 @@ export function CallScreen() {
   }, 60000, role);
 
   const opts = useMemo(
-    () => (role === "restaurant" ? { restaurantId: who || undefined } : { recipientId: who || undefined }),
-    [role, who],
+    () => (role === "restaurant" ? { restaurantId: who || undefined, language: lang } : { recipientId: who || undefined, language: lang }),
+    [role, who, lang],
   );
   const { state, start, hangUp, sendText, level } = useAgentCall(role, opts);
   const [typed, setTyped] = useState("");
@@ -104,7 +113,10 @@ export function CallScreen() {
   }
 
   const lines = state.lines.slice(-6);
-  const outcomeText = state.outcome ? OUTCOME[state.outcome] ?? "Call ended." : null;
+  const outcomeText = !state.outcome ? null
+    : !state.matching && state.outcome === "offer_created" ? "Offer listed. Matching is paused, so no shelter was contacted."
+      : !state.matching && state.outcome === "demand_created" ? "Request saved. Matching is paused, so no offers will be sent."
+        : OUTCOME[state.outcome] ?? "Call ended.";
 
   return (
     <main className="relative mx-auto max-w-[1240px] px-5 py-10 lg:px-8 lg:py-14">
@@ -117,7 +129,7 @@ export function CallScreen() {
           </p>
           <h1 className="display mt-3 text-5xl text-white sm:text-6xl">Call AnnaRelay</h1>
           <p className="mt-3 max-w-xl text-[17px] text-white/65">
-            No forms. Just talk, in English, Hindi or both. The card fills itself in as you speak, and nothing is listed until you say yes.
+            No forms. Just talk, in English, Hindi, Kannada, Tamil or any Indian language, and it answers in yours. The card fills itself in as you speak, and nothing is listed until you say yes.
           </p>
         </div>
         <RoleToggle role={role} onChange={setRole} disabled={inCall} />
@@ -156,6 +168,24 @@ export function CallScreen() {
                         who === d.id ? "border-sky bg-sky/15 text-white" : "border-line text-white/65 hover:text-white")}
                     >
                       {d.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="mb-2 font-mono text-[10.5px] tracking-[0.12em] text-white/45 uppercase">Language</p>
+                <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Call language">
+                  {LANGS.map(([code, label]) => (
+                    <button
+                      key={code}
+                      type="button"
+                      role="radio"
+                      aria-checked={lang === code}
+                      onClick={() => setLang(code)}
+                      className={cx("rounded-full border px-3 py-1.5 text-sm transition-colors",
+                        lang === code ? "border-sky bg-sky/15 text-white" : "border-line text-white/65 hover:text-white")}
+                    >
+                      {label}
                     </button>
                   ))}
                 </div>
@@ -241,14 +271,24 @@ export function CallScreen() {
 
         {/* ---- right: the card that becomes the live offer ---- */}
         <section aria-label={role === "restaurant" ? "Your offer" : "Your request"} className="min-w-0">
-          {state.offer ? (
+          {state.offer && !state.matching ? (
+            <div className="animate-pop rounded-card border border-emerald/40 bg-raised p-6">
+              <p className="font-mono text-[10.5px] tracking-[0.14em] text-emerald uppercase">Offer listed · {state.offer.restaurant_name}</p>
+              <h2 className="display mt-2 text-3xl text-white">{state.offer.meal_count} plates · {state.offer.items.map((i) => i.name).join(", ") || "Cooked food"}</h2>
+              <p className="mt-2 text-white/70">{state.offer.diet === "veg" ? "Veg" : "Non-veg"} · safe until {fmtTime(state.offer.safe_until)}</p>
+              <p className="mt-4 text-white/60">Diet and safety checklist confirmed aloud. Matching is paused for this demo, so no shelter is contacted.</p>
+              <Link href={`/offers/${state.offer.id}`} className="mt-4 inline-flex items-center gap-1.5 font-semibold text-sky">See the offer <ArrowRight className="size-4" aria-hidden /></Link>
+            </div>
+          ) : state.offer ? (
             <LiveOfferPanel initial={state.offer} />
           ) : state.demand ? (
             <div className="animate-pop rounded-card border border-emerald/40 bg-raised p-6">
               <p className="font-mono text-[10.5px] tracking-[0.14em] text-emerald uppercase">Request live</p>
               <h2 className="display mt-2 text-3xl text-white">Food for {state.demand.people_count} people</h2>
               <p className="mt-2 text-white/70">{state.demand.recipient_name} · by {fmtTime(state.demand.needed_by)} · within {state.demand.max_distance_km} km</p>
-              <p className="mt-4 text-white/60">Offers that fit arrive on Telegram and in the web inbox.</p>
+              <p className="mt-4 text-white/60">
+                {state.matching ? "Offers that fit arrive on Telegram and in the web inbox." : "Matching is paused for this demo, so no offers will be sent."}
+              </p>
               <Link href={`/collector/${state.demand.recipient_id}`} className="mt-4 inline-flex items-center gap-1.5 font-semibold text-sky">Open the inbox <ArrowRight className="size-4" aria-hidden /></Link>
             </div>
           ) : (

@@ -36,6 +36,8 @@ export interface CallState {
   notice: string | null;
   offer: OfferDetail | null;
   demand: Demand | null;
+  /** false when the backend runs with matching paused (intake only: nobody is contacted) */
+  matching: boolean;
   outcome: string | null;
   error: string | null;
 }
@@ -44,7 +46,7 @@ const INITIAL: CallState = {
   status: "idle", callId: null, phase: "collect", lines: [], draft: {}, missing: [], guardrail: null,
   confirmations: { diet_confirmed: false, safety_checklist_confirmed: false },
   thinking: false, speaking: false, micOn: false, micError: null, notice: null,
-  offer: null, demand: null, outcome: null, error: null,
+  offer: null, demand: null, matching: true, outcome: null, error: null,
 };
 
 interface Msg { type: string; [k: string]: unknown }
@@ -57,6 +59,19 @@ export function useAgentCall(role: CallRole, opts: { restaurantId?: string; reci
   const playerRef = useRef<ClipPlayer | null>(null);
   const lineId = useRef(0);
   const micLevel = useRef(0);
+  // the backend's echo guard needs to know when a reply has *fully* played, not just when the queue
+  // drained between two sentences: report it once audio_end for the latest turn arrived and all is quiet
+  const turnRef = useRef(0);
+  const audioEndRef = useRef(0);
+  const reportedRef = useRef(0);
+
+  const maybePlaybackDone = useCallback(() => {
+    const turn = turnRef.current;
+    if (!turn || audioEndRef.current !== turn || reportedRef.current === turn) return;
+    if (playerRef.current?.playing || (typeof window !== "undefined" && window.speechSynthesis?.speaking)) return;
+    reportedRef.current = turn;
+    if (wsRef.current?.readyState === WebSocket.OPEN) wsRef.current.send(JSON.stringify({ event: "playback_done", turn }));
+  }, []);
 
   const patch = useCallback((p: Partial<CallState> | ((s: CallState) => Partial<CallState>)) => {
     setState((s) => ({ ...s, ...(typeof p === "function" ? p(s) : p) }));
@@ -103,6 +118,7 @@ export function useAgentCall(role: CallRole, opts: { restaurantId?: string; reci
         patch({ thinking: true });
         break;
       case "agent":
+        if (typeof m.turn === "number") turnRef.current = m.turn;
         patch((s) => ({
           thinking: false,
           phase: (m.phase as CallPhase) ?? s.phase,
@@ -114,13 +130,23 @@ export function useAgentCall(role: CallRole, opts: { restaurantId?: string; reci
         break;
       case "audio_unavailable":
         if (typeof window !== "undefined" && "speechSynthesis" in window && typeof m.text === "string") {
-          window.speechSynthesis.speak(new SpeechSynthesisUtterance(m.text));
+          const u = new SpeechSynthesisUtterance(m.text);
+          u.onend = maybePlaybackDone;
+          window.speechSynthesis.speak(u);
         }
+        break;
+      case "audio_end":
+        if (typeof m.turn === "number") audioEndRef.current = m.turn;
+        maybePlaybackDone();
         break;
       case "interrupt":
         playerRef.current?.interrupt();
         window.speechSynthesis?.cancel();
+        reportedRef.current = turnRef.current; // the backend already knows playback stopped
         patch({ speaking: false });
+        break;
+      case "error":
+        patch({ status: "error", error: String(m.message ?? "The voice agent couldn't start the call.") });
         break;
       case "draft":
         patch({
@@ -132,10 +158,10 @@ export function useAgentCall(role: CallRole, opts: { restaurantId?: string; reci
         });
         break;
       case "offer_created":
-        patch({ offer: normalizeOffer(m.offer as OfferDetail) });
+        patch({ offer: normalizeOffer(m.offer as OfferDetail), matching: m.matching !== false });
         break;
       case "demand_created":
-        patch({ demand: m.demand as Demand });
+        patch({ demand: m.demand as Demand, matching: m.matching !== false });
         break;
       case "notice":
         patch({ notice: String(m.message ?? "") });
@@ -144,10 +170,11 @@ export function useAgentCall(role: CallRole, opts: { restaurantId?: string; reci
         patch({ outcome: String(m.outcome ?? "ended"), phase: "ended" as CallPhase, thinking: false });
         break;
     }
-  }, [patch]);
+  }, [patch, maybePlaybackDone]);
 
   const start = useCallback(async () => {
     teardown();
+    turnRef.current = audioEndRef.current = reportedRef.current = 0;
     setState({ ...INITIAL, status: "connecting" });
     // AudioContext must be created inside the click handler (autoplay policy)
     const ctx = new AudioContext();
@@ -157,7 +184,7 @@ export function useAgentCall(role: CallRole, opts: { restaurantId?: string; reci
     player.onStart = () => patch({ speaking: true });
     player.onIdle = () => {
       patch({ speaking: false });
-      if (wsRef.current?.readyState === WebSocket.OPEN) wsRef.current.send(JSON.stringify({ event: "playback_done" }));
+      maybePlaybackDone();
     };
     playerRef.current = player;
 
@@ -197,7 +224,7 @@ export function useAgentCall(role: CallRole, opts: { restaurantId?: string; reci
         patch({ micOn: false, micError: "Microphone unavailable. You can type your answers instead." });
       }
     };
-  }, [role, opts.restaurantId, opts.recipientId, opts.language, onMessage, patch, teardown]);
+  }, [role, opts.restaurantId, opts.recipientId, opts.language, onMessage, patch, teardown, maybePlaybackDone]);
 
   const sendText = useCallback((text: string) => {
     const ws = wsRef.current;

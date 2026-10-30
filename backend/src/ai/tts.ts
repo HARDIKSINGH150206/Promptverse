@@ -5,7 +5,10 @@ import { config } from "../config";
 export const TTS_LANGUAGES = ["bn-IN", "en-IN", "gu-IN", "hi-IN", "kn-IN", "ml-IN", "mr-IN", "od-IN", "pa-IN", "ta-IN", "te-IN"];
 
 export function ttsLanguage(lang: string | null | undefined): string {
-  return lang && TTS_LANGUAGES.includes(lang) ? lang : "en-IN";
+  if (!lang) return "en-IN";
+  if (TTS_LANGUAGES.includes(lang)) return lang;
+  const code = `${lang.split(/[-_]/)[0].toLowerCase()}-IN`; // "hi" -> "hi-IN"
+  return TTS_LANGUAGES.includes(code) ? code : "en-IN";
 }
 
 /** Split into speakable sentences (keeps each request short, so the first audio arrives fast). */

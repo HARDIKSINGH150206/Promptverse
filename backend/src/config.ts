@@ -43,6 +43,9 @@ export const config = {
   THOMPSON_SAMPLING: str("THOMPSON_SAMPLING", "on") as "on" | "off",
   EXPLORE_MIN_SLACK_MINS: num("EXPLORE_MIN_SLACK_MINS", 90),
   DEMO_SEED: num("DEMO_SEED", 42),
+  // off = offers and requests are saved (web or voice) but nobody is matched or contacted, and the
+  // scheduler (timeouts, risk, standby, expiry) doesn't run. For demoing intake on its own.
+  MATCHING: str("MATCHING", "on") as "on" | "off",
   FALLBACK_ORDER: str("FALLBACK_ORDER", "animal_feed,compost")
     .split(",")
     .map((s) => s.trim())
@@ -56,6 +59,9 @@ export const config = {
   AGENT_MODEL: str("AGENT_MODEL", ""),
   // none = no hidden reasoning (fastest; Groq qwen3). gpt-oss models only accept low | medium | high.
   AGENT_REASONING: str("AGENT_REASONING", "none") as "none" | "low" | "medium" | "high" | "default",
+  AGENT_MAX_CALLS: num("AGENT_MAX_CALLS", 3), // concurrent voice calls (each holds a Sarvam stream)
+  AGENT_MAX_CALL_SECS: num("AGENT_MAX_CALL_SECS", 600),
+  MAX_SAFE_HOURS: num("MAX_SAFE_HOURS", 12), // longest cooked -> safe-until window a call may list
   SARVAM_TTS_SAMPLE_RATE: num("SARVAM_TTS_SAMPLE_RATE", 16000),
   SARVAM_SILENCE_MS: num("SARVAM_SILENCE_MS", 400),
   SARVAM_STREAM_MODEL: str("SARVAM_STREAM_MODEL", "saaras:v3-realtime"),

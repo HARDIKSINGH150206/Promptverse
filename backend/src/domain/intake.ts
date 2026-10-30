@@ -1,6 +1,7 @@
 // The one place offers and demands are created. REST forms and the voice agent both go through
 // here, so a voice call can never skip a check the web form enforces.
 import { z } from "zod";
+import { config } from "../config";
 import { addEvent, getRecipient, getRestaurant, insertDemand, insertOffer, listOfferRowsByStatus } from "../db/repo";
 import { nowIso, nowMs } from "./clock";
 import { fmtTime } from "./format";
@@ -66,6 +67,10 @@ export function createOffer(input: z.infer<typeof CreateOfferBody>, guardrail: I
     const confirmed = safety != null && safety > 0.3 ? "the diet and the safety checklist" : "the diet";
     const reasons = guardrail.reasons.length ? guardrail.reasons.join("; ") : "automatic check asked for confirmation";
     addEvent(row.id, "guardrail_flag", `Intake check (${guardrail.source}): ${reasons}. The restaurant confirmed ${confirmed}.`);
+  }
+  if (config.MATCHING === "off") {
+    addEvent(row.id, "matching_started", "Matching is paused: the offer is saved, but no shelter is contacted.");
+    return row.id;
   }
   addEvent(row.id, "matching_started", "Matching started: only recipients who already need this food, ranked by reliability.");
   runMatching(row.id);

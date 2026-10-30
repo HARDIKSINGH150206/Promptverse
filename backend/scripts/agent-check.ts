@@ -23,6 +23,19 @@ const scripts: Record<string, { role: string; lines: string[] }> = {
     "हाँ सही है",
     "हाँ, सब ढका हुआ था और गरम रखा था",
   ] },
+  kannada: { role: "restaurant", lines: [
+    "ನಮಸ್ಕಾರ, ಕೋರಮಂಗಲ ಕಿಚನ್ ಇಂದ ಮಾತಾಡ್ತಿದ್ದೀನಿ. ಮೂವತ್ತು ಪ್ಲೇಟ್ ವೆಜ್ ಪಲಾವ್ ಉಳಿದಿದೆ.",
+    "ಹನ್ನೊಂದು ಗಂಟೆಗೆ ಮಾಡಿದ್ದು, ಸಂಜೆ ಆರು ಗಂಟೆವರೆಗೆ ಸರಿ ಇರುತ್ತೆ.",
+    "ಹೌದು ಸರಿ",
+    "ಹೌದು",
+  ] },
+  // starts in English, switches to Hindi: the agent should follow
+  switch: { role: "restaurant", lines: [
+    "Hi, this is Koramangala Kitchen, we have 25 plates of veg pulao left.",
+    "खाना ग्यारह बजे बना था और शाम छह बजे तक ठीक रहेगा।",
+    "हाँ सही है",
+    "हाँ",
+  ] },
   recipient: { role: "recipient", lines: [
     "Hello, this is New Dawn Shelter. We need food for 25 people tonight.",
     "Anything is fine, veg or non veg. By 9 pm.",

@@ -22,6 +22,7 @@ function step(name: string, fn: () => void): void {
 }
 
 export function tick(): void {
+  if (config.MATCHING === "off") return; // intake-only demo: nothing to time out, escalate or expire
   // 1. offer timeouts
   step("offer timeouts", () => {
     for (const a of listAssignmentsByStatus("offered")) if (past(a.respond_by)) timeoutOffer(a.id);

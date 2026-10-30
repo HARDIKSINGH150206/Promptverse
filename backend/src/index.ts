@@ -53,6 +53,7 @@ if (!process.env.VITEST) {
     }
     wss.handleUpgrade(req, socket, head, (ws) => wss.emit("connection", ws, req));
   });
-  startScheduler();
+  if (config.MATCHING === "on") startScheduler();
+  else console.log("Matching is OFF: intake only, nobody is matched or contacted, scheduler not started.");
   void startBot();
 }
